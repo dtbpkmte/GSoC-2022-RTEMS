@@ -1,0 +1,24 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+copyrights:
+- Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
+actions:
+- get-string: null
+- script: |
+    variants = ["STM32F405xx", "STM32F415xx", "STM32F407xx", "STM32F417xx", "STM32F427xx", "STM32F437xx", "STM32F429xx", "STM32F439xx", "STM32F401xC", "STM32F401xE", "STM32F410Tx", "STM32F410Rx", "STM32F411xE", "STM32F446xx", "STM32F469xx", "STM32F479xx", "STM32F412Cx", "STM32F412Rx", "STM32F412Vx", "STM32F413xx", "STM32F423xx"]
+    if value not in variants:
+        conf.fatal(
+            "STM32F4 chip variant '{}' is not one of {}".format(
+                value, variants
+            )
+        )
+    conf.define_cond(value, True)
+build-type: option
+default: STM32F407xx
+default-by-variant: []
+enabled-by: true
+format: '{}'
+links: []
+name: STM32F4_VARIANT
+description: |
+  Select the STM32F4 series chip variant out of STM32F405xx, STM32F415xx, STM32F407xx, STM32F417xx, STM32F427xx, STM32F437xx, STM32F429xx, STM32F439xx, STM32F401xC, STM32F401xE, STM32F410Tx, STM32F410Rx, STM32F411xE, STM32F446xx, STM32F469xx, STM32F479xx, STM32F412Cx, STM32F412Rx, STM32F412Vx, STM32F413xx, and STM32F423xx.
+type: build
