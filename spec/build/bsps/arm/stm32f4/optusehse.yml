@@ -1,0 +1,16 @@
+SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
+actions:
+- get-integer: null
+- define: null
+build-type: option
+copyrights:
+- Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
+default: 0
+default-by-variant: []
+description: |
+  Use HSI for PLL by default, set it to 1 to use HSE for PLL.
+enabled-by: true
+format: '{}'
+links: []
+name: STM32F4_USE_HSE
+type: build

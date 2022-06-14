@@ -19,6 +19,10 @@
 #include <stdint.h>
 #include <bspopts.h>
 
+#ifdef __rtems__
+#include <stm32f4xx.h>
+#endif /* __rtems__ */
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
