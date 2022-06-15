@@ -8,9 +8,13 @@ install: []
 ldflags: []
 links:
 - role: build-dependency
-  uid: ../grp
+  uid: ../../obj
 - role: build-dependency
-  uid: ../start
+  uid: optenhal
+- role: build-dependency
+  uid: optvariant
+- role: build-dependency
+  uid: opthse
 - role: build-dependency
   uid: abi
 - role: build-dependency
@@ -50,7 +54,9 @@ links:
 - role: build-dependency
   uid: ../../linkcmds
 - role: build-dependency
-  uid: ../../obj
+  uid: ../grp
+- role: build-dependency
+  uid: ../start
 - role: build-dependency
   uid: ../../objirq
 - role: build-dependency

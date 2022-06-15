@@ -13,9 +13,9 @@ struct rtems_gpio_pin_t {
 
 struct rtems_gpio_config_t {
     GPIO_InitTypeDef *config;
-}
+};
 
-__weak rtems_status_code rtems_gpio_initialize(void) {
+__attribute__((weak)) rtems_status_code rtems_gpio_initialize(void) {
     return RTEMS_SUCCESSFUL;
 }
 

@@ -5,11 +5,12 @@ actions:
 build-type: option
 copyrights:
 - Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
-default: USE_HAL_DRIVER
+default: true
 default-by-variant: []
 description: |
   Use HAL driver
 enabled-by: true
+format: '{}'
 links: []
 name: USE_HAL_DRIVER
 type: build

@@ -57,7 +57,7 @@ typedef struct rtems_gpio_pin_t rtems_gpio_pin_t;
   * @brief Opaque type for configuration of a GPIO object.
   *        To be implemented by BSP.
   */
-typedef struct rtems_gpio_config_t;
+typedef struct rtems_gpio_config_t rtems_gpio_config_t;
 
 /** @} */
 
@@ -73,7 +73,7 @@ typedef struct rtems_gpio_config_t;
   * @retval RTEMS_SUCCESSFUL GPIO successfully initialized.
   * @retval RTEMS_UNSATISFIED Could not initialize GPIO object.
   */
-extern rtems_status_code rtems_gpio_initialize(void);
+rtems_status_code rtems_gpio_initialize(void);
 
 /**
   * @brief Configures a GPIO object.
