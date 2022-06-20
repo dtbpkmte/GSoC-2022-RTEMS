@@ -6,13 +6,13 @@
   * @brief RTEMS GPIO new API definition.
   */
 
- /*
-  *  Copyright (c) 2022 Duc Doan <dtbpkmte at gmail.com>
-  *
-  *  The license and distribution terms for this file may be
-  *  found in the file LICENSE in this distribution or at
-  *  http://www.rtems.org/license/LICENSE.
-  */
+/*
+*  Copyright (c) 2022 Duc Doan <dtbpkmte at gmail.com>
+*
+*  The license and distribution terms for this file may be
+*  found in the file LICENSE in this distribution or at
+*  http://www.rtems.org/license/LICENSE.
+*/
 
 #ifndef LIBBSP_SHARED_GPIO2_H
 #define LIBBSP_SHARED_GPIO2_H
@@ -34,24 +34,39 @@ extern "C" {
   * @brief GPIO bit set and reset enumeration.
   */
 typedef enum {
-    RTEMS_GPIO_PIN_SET = 0,
-    RTEMS_GPIO_PIN_RESET
+    RTEMS_GPIO_PIN_RESET = 0,
+    RTEMS_GPIO_PIN_SET = 1
 } rtems_gpio_pin_state;
 
 /**
-  * @brief Opaque type for a GPIO object.
-  *        To be implemented by BSP.
-  * 
-  * @details This could represent the unit that owns GPIO pins. 
-  *          For example, it would be a port for ARM Cortex-M.
+  * @brief GPIO pin modes. An architecture may or may not support 
+  *        all of them.
   */
-typedef struct rtems_gpio_t rtems_gpio_t;
+typedef enum {
+    RTEMS_GPIO_PINMODE_OUTPUT_PP,
+    RTEMS_GPIO_PINMODE_OUTPUT_OD,
+    RTEMS_GPIO_PINMODE_INPUT,
+    RTEMS_GPIO_PINMODE_ANALOG,
+    RTEMS_GPIO_PINMODE_INTERRUPT
+} rtems_gpio_pin_mode;
 
 /**
-  * @brief Opaque type for a GPIO pin object.
-  *        To be implemented by BSP.
+  * @brief Interrupt modes
   */
-typedef struct rtems_gpio_pin_t rtems_gpio_pin_t;
+typedef enum {
+    NONE = 0,
+    FALLING,
+    RISING,
+    BOTH_EDGES
+} rtems_gpio_interrupt;
+
+/**
+  * @brief Opaque type for a GPIO object. It holds information
+  *        like port number and pin number.
+  *        To be implemented by BSP.
+  * 
+  */
+typedef struct rtems_gpio_t rtems_gpio_t;
 
 /**
   * @brief Opaque type for configuration of a GPIO object.
@@ -88,37 +103,45 @@ rtems_status_code rtems_gpio_initialize(void);
 extern rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_config_t *config);
 
 /**
-  * @brief Writes a digital value to a pin/pins.
+  * @brief Sets a pin's mode.
   *
-  * @param[in] gpiox The GPIO object that owns the pin(s).
-  * @param[in] pin The GPIO pin number or pin mask to be written.
-  * @param[in] value The state to be written to the pin(s).
+  * @param[in] gpiox The GPIO object containing the pin to be configured.
+  * @param[in] mode The pin mode to be set.
+  */
+extern rtems_status_code rtems_gpio_pin_mode(rtems_gpio_t *gpiox, rtems_gpio_pin_mode mode);
+
+/**
+  * @brief Writes a digital value to a pin.
+  *
+  * @param[in] gpiox The GPIO object that owns the pin.
+  * @param[in] value The state to be written to the pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin successfully written.
-  * @retval RTEMS_UNSATISFIED Could not write to pin(s).
+  * @retval RTEMS_UNSATISFIED Could not write to pin.
   */
-extern rtems_status_code rtems_gpio_write_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_t *pin, rtems_gpio_pin_state value);
+extern rtems_status_code rtems_gpio_write_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state value);
 
 /**
-  * @brief Reads the digital value of a pin/pins.
+  * @brief Reads the digital value of a pin.
   *
-  * @param[in] gpiox The GPIO object that owns the pin(s).
-  * @param[in] pin The GPIO pin(s) to be read.
+  * @param[in] gpiox The GPIO object that owns the pin.
   *
-  * @retval The state of the pin(s).
+  * @param[out] value The state of the pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin succesfully read.
+  * @retval RTEMS_UNSATISFIED Could not read pin.
   */
-extern rtems_gpio_pin_state rtems_gpio_read_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_t *pin);
+extern rtems_status_code rtems_gpio_read_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state *value);
 
 /**
-  * @brief Toggles the state of a GPIO pin/pins.
+  * @brief Toggles the state of a GPIO pin.
   *
-  * @param[in] gpiox The GPIO object that owns the pin(s).
-  * @param[in] pin The GPIO pin(s) to be toggled.
+  * @param[in] gpiox The GPIO object that owns the pin.
   *
-  * @retval RTEMS_SUCCESSFUL Pin(s) successfully toggled.
-  * @retval RTEMS_UNSATISFIED Could not toggle pin(s).
+  * @retval RTEMS_SUCCESSFUL Pin successfully toggled.
+  * @retval RTEMS_UNSATISFIED Could not toggle pin.
   */
-extern rtems_status_code rtems_gpio_toggle_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_t *pin);
+extern rtems_status_code rtems_gpio_toggle_pin(rtems_gpio_t *gpiox);
 
 /** @} */
 

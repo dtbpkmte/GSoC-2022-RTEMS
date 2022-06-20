@@ -6,14 +6,6 @@
   * @brief RTEMS GPIO new API implementation for STM32F4.
   */
 
- /*
-  *  Copyright (c) 2022 Duc Doan <dtbpkmte at gmail.com>
-  *
-  *  The license and distribution terms for this file may be
-  *  found in the file LICENSE in this distribution or at
-  *  http://www.rtems.org/license/LICENSE.
-  */
-
 #include <bsp.h>
 #include <rtems.h>
 //#include <bsp/gpio2.h>

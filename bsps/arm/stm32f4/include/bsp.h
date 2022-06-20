@@ -42,7 +42,9 @@ extern "C" {
 
 #define BSP_ARMV7M_SYSTICK_FREQUENCY STM32F4_HCLK
 
+#ifdef __rtems__
 void Error_Handler(void);
+#endif /* __rtems__ */
 
 #ifdef __cplusplus
 }
