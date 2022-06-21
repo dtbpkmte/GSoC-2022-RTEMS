@@ -96,6 +96,9 @@ typedef struct rtems_gpio_config_t rtems_gpio_config_t;
 
 /**
   * @brief Initialization for GPIO. To be implemented by User Application.
+  *        This function is called in bsp_start(), before Init task. It can
+  *        be used, for example, to enable the GPIO clocks for STM32F4
+  *        family.
   *
   * @retval RTEMS_SUCCESSFUL GPIO successfully initialized.
   * @retval RTEMS_UNSATISFIED Could not initialize GPIO object.
