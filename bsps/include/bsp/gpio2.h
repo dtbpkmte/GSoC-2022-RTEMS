@@ -14,8 +14,8 @@
 *  http://www.rtems.org/license/LICENSE.
 */
 
-#ifndef LIBBSP_SHARED_GPIO2_H
-#define LIBBSP_SHARED_GPIO2_H
+#ifndef LIBBSP_BSP_GPIO2_H
+#define LIBBSP_BSP_GPIO2_H
 
 #include <bsp.h>
 #include <rtems.h>
@@ -39,16 +39,28 @@ typedef enum {
 } rtems_gpio_pin_state;
 
 /**
-  * @brief GPIO pin modes. An architecture may or may not support 
-  *        all of them.
+  * @brief GPIO pin modes. If a BSP has its other specific modes, 
+  *        use RTEMS_GPIO_PINMODE_BSP_SPECIFIC and specify more 
+  *        configuration details in the rtems_gpio_config_t.
   */
 typedef enum {
     RTEMS_GPIO_PINMODE_OUTPUT_PP,
     RTEMS_GPIO_PINMODE_OUTPUT_OD,
     RTEMS_GPIO_PINMODE_INPUT,
     RTEMS_GPIO_PINMODE_ANALOG,
-    RTEMS_GPIO_PINMODE_INTERRUPT
+    RTEMS_GPIO_PINMODE_INTERRUPT,
+    RTEMS_GPIO_PINMODE_BSP_SPECIFIC
 } rtems_gpio_pin_mode;
+
+/**
+  * @brief GPIO pull register configuration. Defines pull-up or 
+  *        pull-down activation.
+  */
+typedef enum {
+    RTEMS_GPIO_NOPULL,
+    RTEMS_GPIO_PULLUP,
+    RTEMS_GPIO_PULLDOWN
+} rtems_gpio_pull;
 
 /**
   * @brief Interrupt modes
@@ -70,7 +82,7 @@ typedef struct rtems_gpio_t rtems_gpio_t;
 
 /**
   * @brief Opaque type for configuration of a GPIO object.
-  *        To be implemented by BSP.
+  *        Specific to each BSP. To be implemented by BSP.
   */
 typedef struct rtems_gpio_config_t rtems_gpio_config_t;
 
@@ -100,15 +112,7 @@ rtems_status_code rtems_gpio_initialize(void);
   * @retval RTEMS_SUCCESSFUL GPIO configured successfully.
   * @retval RTEMS_UNSATISFIED Could not configure GPIO object.
   */
-extern rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_config_t *config);
-
-/**
-  * @brief Sets a pin's mode.
-  *
-  * @param[in] gpiox The GPIO object containing the pin to be configured.
-  * @param[in] mode The pin mode to be set.
-  */
-extern rtems_status_code rtems_gpio_pin_mode(rtems_gpio_t *gpiox, rtems_gpio_pin_mode mode);
+extern rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_pin_mode mode, rtems_gpio_pull pull, rtems_gpio_config_t *config);
 
 /**
   * @brief Writes a digital value to a pin.
@@ -149,4 +153,4 @@ extern rtems_status_code rtems_gpio_toggle_pin(rtems_gpio_t *gpiox);
 }
 #endif /* __cplusplus */
 
-#endif /* LIBBSP_SHARED_GPIO2_H */
+#endif /* LIBBSP_BSP_GPIO2_H */

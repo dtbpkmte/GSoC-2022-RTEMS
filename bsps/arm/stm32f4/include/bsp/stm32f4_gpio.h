@@ -1,187 +1,41 @@
 #ifndef LIBBSP_STM32F4_GPIO
 #define LIBBSP_STM32F4_GPIO
 
-#include <bspopts.h>
 #include <stm32f4xx.h>
 #include <bsp/gpio2.h>
 
 struct rtems_gpio_t {
     GPIO_TypeDef *port;
-    uint16_t pin_mask;
+    uint16_t pin;
 };
 
+/**
+  * This structure should be initialized to 0 
+  *
+  * This structure holds configuration options for STM32F4-specific
+  * GPIO. The 2 specific modes are Event and Alternate modes. Select
+  * a mode by setting the correct field (is_event_mode or is_alternate_mode)
+  * to 1.
+  */
 struct rtems_gpio_config_t {
-    GPIO_InitTypeDef *config;
+    uint32_t speed;             /* Speed of the pin. Must be specified */
+                                   
+    uint32_t interrupt_mode;    /* The type of interrupt trigger of the pin 
+                                   Use if the pin is in Interrupt mode */
+                                   
+    uint32_t is_event_mode;     /* Sets to 1 if the pin is in event mode,
+                                   0 other wise.
+                                   Use if the pin is in Event mode */
+    uint32_t event_mode;        /* The type of event trigger of the pin 
+                                   Use if the pin is in Event mode */
+    
+    uint32_t is_alternate_mode; /* Sets to 1 if the pin is in Alternate mode,
+                                   0 other wise.
+                                   Use if the pin is in Alternate mode */
+    uint32_t alternate_mode;    /* Open drain or Push-pull mode
+                                   Use if the pin is in Alternate mode */
+    uint32_t alternate_fn;      /* The alternate function of the pin
+                                   Use if the pin is in Alternate mode */
 };
-
-rtems_gpio_t STM32F4_GPIO_PIN_A0 = {GPIOA, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_A1 = {GPIOA, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_A2 = {GPIOA, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_A3 = {GPIOA, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_A4 = {GPIOA, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_A5 = {GPIOA, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_A6 = {GPIOA, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_A7 = {GPIOA, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_A8 = {GPIOA, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_A9 = {GPIOA, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_A10 = {GPIOA, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_A11 = {GPIOA, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_A12 = {GPIOA, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_A13 = {GPIOA, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_A14 = {GPIOA, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_A15 = {GPIOA, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_B0 = {GPIOB, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_B1 = {GPIOB, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_B2 = {GPIOB, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_B3 = {GPIOB, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_B4 = {GPIOB, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_B5 = {GPIOB, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_B6 = {GPIOB, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_B7 = {GPIOB, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_B8 = {GPIOB, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_B9 = {GPIOB, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_B10 = {GPIOB, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_B11 = {GPIOB, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_B12 = {GPIOB, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_B13 = {GPIOB, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_B14 = {GPIOB, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_B15 = {GPIOB, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_C0 = {GPIOC, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_C1 = {GPIOC, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_C2 = {GPIOC, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_C3 = {GPIOC, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_C4 = {GPIOC, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_C5 = {GPIOC, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_C6 = {GPIOC, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_C7 = {GPIOC, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_C8 = {GPIOC, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_C9 = {GPIOC, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_C10 = {GPIOC, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_C11 = {GPIOC, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_C12 = {GPIOC, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_C13 = {GPIOC, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_C14 = {GPIOC, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_C15 = {GPIOC, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_D0 = {GPIOD, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_D1 = {GPIOD, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_D2 = {GPIOD, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_D3 = {GPIOD, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_D4 = {GPIOD, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_D5 = {GPIOD, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_D6 = {GPIOD, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_D7 = {GPIOD, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_D8 = {GPIOD, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_D9 = {GPIOD, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_D10 = {GPIOD, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_D11 = {GPIOD, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_D12 = {GPIOD, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_D13 = {GPIOD, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_D14 = {GPIOD, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_D15 = {GPIOD, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_E0 = {GPIOE, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_E1 = {GPIOE, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_E2 = {GPIOE, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_E3 = {GPIOE, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_E4 = {GPIOE, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_E5 = {GPIOE, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_E6 = {GPIOE, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_E7 = {GPIOE, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_E8 = {GPIOE, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_E9 = {GPIOE, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_E10 = {GPIOE, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_E11 = {GPIOE, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_E12 = {GPIOE, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_E13 = {GPIOE, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_E14 = {GPIOE, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_E15 = {GPIOE, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_F0 = {GPIOF, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_F1 = {GPIOF, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_F2 = {GPIOF, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_F3 = {GPIOF, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_F4 = {GPIOF, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_F5 = {GPIOF, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_F6 = {GPIOF, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_F7 = {GPIOF, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_F8 = {GPIOF, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_F9 = {GPIOF, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_F10 = {GPIOF, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_F11 = {GPIOF, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_F12 = {GPIOF, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_F13 = {GPIOF, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_F14 = {GPIOF, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_F15 = {GPIOF, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_G0 = {GPIOG, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_G1 = {GPIOG, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_G2 = {GPIOG, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_G3 = {GPIOG, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_G4 = {GPIOG, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_G5 = {GPIOG, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_G6 = {GPIOG, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_G7 = {GPIOG, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_G8 = {GPIOG, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_G9 = {GPIOG, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_G10 = {GPIOG, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_G11 = {GPIOG, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_G12 = {GPIOG, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_G13 = {GPIOG, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_G14 = {GPIOG, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_G15 = {GPIOG, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_H0 = {GPIOH, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_H1 = {GPIOH, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_H2 = {GPIOH, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_H3 = {GPIOH, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_H4 = {GPIOH, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_H5 = {GPIOH, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_H6 = {GPIOH, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_H7 = {GPIOH, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_H8 = {GPIOH, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_H9 = {GPIOH, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_H10 = {GPIOH, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_H11 = {GPIOH, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_H12 = {GPIOH, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_H13 = {GPIOH, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_H14 = {GPIOH, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_H15 = {GPIOH, GPIO_PIN_15};
-
-rtems_gpio_t STM32F4_GPIO_PIN_I0 = {GPIOI, GPIO_PIN_0};
-rtems_gpio_t STM32F4_GPIO_PIN_I1 = {GPIOI, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_I2 = {GPIOI, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_I3 = {GPIOI, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_I4 = {GPIOI, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_I5 = {GPIOI, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_I6 = {GPIOI, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_I7 = {GPIOI, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_I8 = {GPIOI, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_I9 = {GPIOI, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_I10 = {GPIOI, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_I11 = {GPIOI, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_I12 = {GPIOI, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_I13 = {GPIOI, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_I14 = {GPIOI, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_I15 = {GPIOI, GPIO_PIN_15};
-#ifdef STM32F429xx
-rtems_gpio_t STM32F4_GPIO_PIN_K1 = {GPIOK, GPIO_PIN_1};
-rtems_gpio_t STM32F4_GPIO_PIN_K2 = {GPIOK, GPIO_PIN_2};
-rtems_gpio_t STM32F4_GPIO_PIN_K3 = {GPIOK, GPIO_PIN_3};
-rtems_gpio_t STM32F4_GPIO_PIN_K4 = {GPIOK, GPIO_PIN_4};
-rtems_gpio_t STM32F4_GPIO_PIN_K5 = {GPIOK, GPIO_PIN_5};
-rtems_gpio_t STM32F4_GPIO_PIN_K6 = {GPIOK, GPIO_PIN_6};
-rtems_gpio_t STM32F4_GPIO_PIN_K7 = {GPIOK, GPIO_PIN_7};
-rtems_gpio_t STM32F4_GPIO_PIN_K8 = {GPIOK, GPIO_PIN_8};
-rtems_gpio_t STM32F4_GPIO_PIN_K9 = {GPIOK, GPIO_PIN_9};
-rtems_gpio_t STM32F4_GPIO_PIN_K10 = {GPIOK, GPIO_PIN_10};
-rtems_gpio_t STM32F4_GPIO_PIN_K11 = {GPIOK, GPIO_PIN_11};
-rtems_gpio_t STM32F4_GPIO_PIN_K12 = {GPIOK, GPIO_PIN_12};
-rtems_gpio_t STM32F4_GPIO_PIN_K13 = {GPIOK, GPIO_PIN_13};
-rtems_gpio_t STM32F4_GPIO_PIN_K14 = {GPIOK, GPIO_PIN_14};
-rtems_gpio_t STM32F4_GPIO_PIN_K15 = {GPIOK, GPIO_PIN_15};
-#endif
 
 #endif
