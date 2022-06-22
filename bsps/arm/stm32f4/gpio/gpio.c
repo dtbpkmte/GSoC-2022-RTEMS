@@ -18,7 +18,7 @@ rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_pin_mode 
     GPIO_InitTypeDef init_struct;
 
     // Pin number
-    init_struct.Pin = gpiox->pin;
+    init_struct.Pin = (uint16_t) (gpiox->pin_mask);
     
     // Pin mode
     switch (mode) {
@@ -82,16 +82,16 @@ rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_pin_mode 
 }
 
 rtems_status_code rtems_gpio_write_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state value) {
-    HAL_GPIO_WritePin((GPIO_TypeDef *) (gpiox->port), gpiox->pin, value);
+    HAL_GPIO_WritePin((GPIO_TypeDef *) (gpiox->port), gpiox->pin_mask, value);
     return RTEMS_SUCCESSFUL;
 }
 
 rtems_status_code rtems_gpio_read_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state *value) {
-    *value = HAL_GPIO_ReadPin((GPIO_TypeDef *) (gpiox->port), gpiox->pin);
+    *value = HAL_GPIO_ReadPin((GPIO_TypeDef *) (gpiox->port), gpiox->pin_mask);
     return RTEMS_SUCCESSFUL;
 }
 
 rtems_status_code rtems_gpio_toggle_pin(rtems_gpio_t *gpiox) {
-    HAL_GPIO_TogglePin((GPIO_TypeDef *) (gpiox->port), gpiox->pin);
+    HAL_GPIO_TogglePin((GPIO_TypeDef *) (gpiox->port), gpiox->pin_mask);
     return RTEMS_SUCCESSFUL;
 }

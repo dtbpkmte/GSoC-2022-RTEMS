@@ -25,10 +25,10 @@ extern "C" {
 #endif /* __cplusplus */
 
 /**
- * @name GPIO data structures
- *
- * @{
- */
+  * @name GPIO data structures
+  *
+  * @{
+  */
 
 /**
   * @brief GPIO bit set and reset enumeration.
@@ -63,7 +63,7 @@ typedef enum {
 } rtems_gpio_pull;
 
 /**
-  * @brief Interrupt modes
+  * @brief Interrupt modes enumeration
   */
 typedef enum {
     NONE = 0,
@@ -73,18 +73,32 @@ typedef enum {
 } rtems_gpio_interrupt;
 
 /**
-  * @brief Opaque type for a GPIO object. It holds information
-  *        like port number and pin number.
+  * @brief Structure for a GPIO object. It holds information
+  *        like port number and pin number/pin mask.
   *        To be implemented by BSP.
   * 
   */
-typedef struct rtems_gpio_t rtems_gpio_t;
+typedef struct {
+    uint32_t pin_mask;  /* The pin number or pin mask */
+    bool is_expanded;   /* If the GPIO is an expander, set to true.
+                           Else false. */
+    void *bsp;          /* Pointer to BSP-specific data */
+} rtems_gpio_t;
 
 /**
   * @brief Opaque type for configuration of a GPIO object.
   *        Specific to each BSP. To be implemented by BSP.
   */
-typedef struct rtems_gpio_config_t rtems_gpio_config_t;
+typedef struct {
+    rtems_gpio_pin_mode mode;   /* Pin mode */
+    rtems_gpio_pull pull;       /* Pull register configuration */
+    void *bsp;                  /* Pointer to BSP-specific config */
+} rtems_gpio_config_t;
+
+typedef struct {
+    rtems_gpio_interrupt interrupt_mode;
+    void * callback;
+} rtems_gpio_interrupt_config_t;
 
 /** @} */
 
@@ -118,37 +132,140 @@ rtems_status_code rtems_gpio_initialize(void);
 extern rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_pin_mode mode, rtems_gpio_pull pull, rtems_gpio_config_t *config);
 
 /**
-  * @brief Writes a digital value to a pin.
+  * @brief Writes a digital value to a pin. It selects between the
+  *        default function (built-in GPIO) and GPIO expander
+  *        function based on is_expander field of gpiox.
   *
-  * @param[in] gpiox The GPIO object that owns the pin.
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
+  * @param[in] value The state to be written to the pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin successfully written.
+  * @retval * @see rtems_gpio_write_pin_default().
+  * @retval * @see rtems_gpio_write_pin_ex().
+  */
+extern rtems_status_code rtems_gpio_write_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state value);
+
+/**
+  * @brief Writes a digital value to a pin using the microcontroller's
+  *        built-in GPIO.
+  *
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
   * @param[in] value The state to be written to the pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin successfully written.
   * @retval RTEMS_UNSATISFIED Could not write to pin.
   */
-extern rtems_status_code rtems_gpio_write_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state value);
+extern rtems_status_code rtems_gpio_write_pin_default(rtems_gpio_t *gpiox, rtems_gpio_pin_state value);
 
 /**
-  * @brief Reads the digital value of a pin.
+  * @brief Writes a digital value to a pin using GPIO expander.
+  *        If using GPIO expander, the BSP should implement 
+  *        this function.
   *
-  * @param[in] gpiox The GPIO object that owns the pin.
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
+  * @param[in] value The state to be written to the pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin successfully written.
+  * @retval If operation fails, return the status code from
+  *         the internal function that performs this operation.
+  *         If no such function exists, return RTEMS_UNSATISFIED.
+  */
+extern rtems_status_code rtems_gpio_write_pin_ex(rtems_gpio_t *gpiox, rtems_gpio_pin_state value);
+
+/**
+  * @brief Reads the digital value of a pin. It selects between the
+  *        default function (built-in GPIO) and GPIO expander
+  *        function based on is_expander field of gpiox.
+
+  *
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
   *
   * @param[out] value The state of the pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin succesfully read.
-  * @retval RTEMS_UNSATISFIED Could not read pin.
+  * @retval * @see rtems_gpio_read_pin_default().
+  * @retval * @see rtems_gpio_read_pin_ex().
   */
 extern rtems_status_code rtems_gpio_read_pin(rtems_gpio_t *gpiox, rtems_gpio_pin_state *value);
 
 /**
-  * @brief Toggles the state of a GPIO pin.
+  * @brief Reads the digital value of a pin using the microcontroller's
+  *        built-in GPIO.
   *
-  * @param[in] gpiox The GPIO object that owns the pin.
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
+  *
+  * @param[out] value The state of the pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin succesfully read.
+  * @retval RTEMS_UNSATISFIED Could not read from pin.
+  */
+extern rtems_status_code rtems_gpio_read_pin_default(rtems_gpio_t *gpiox, rtems_gpio_pin_state *value);
+
+/**
+  * @brief Reads the digital value of a pin using GPIO expander.
+  *        If using GPIO expander, the BSP should implement 
+  *        this function.
+  *
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
+  *
+  * @param[out] value The state of the pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin succesfully read.
+  * @retval If operation fails, return the status code from
+  *         the internal function that performs this operation.
+  *         If no such function exists, return RTEMS_UNSATISFIED.
+  */
+extern rtems_status_code rtems_gpio_read_pin_ex(rtems_gpio_t *gpiox, rtems_gpio_pin_state *value);
+
+
+/**
+  * @brief Toggles the state of a GPIO pin. It selects between the
+  *        default function (built-in GPIO) and GPIO expander
+  *        function based on is_expander field of gpiox.
+
+  *
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin successfully toggled.
+  * @retval * @see rtems_gpio_toggle_pin_default().
+  * @retval * @see rtems_gpio_toggle_pin_ex().
+  */
+extern rtems_status_code rtems_gpio_toggle_pin(rtems_gpio_t *gpiox);
+
+/**
+  * @brief Toggles the state of a GPIO pin using microcontroller's
+  *        built-in GPIO.
+  *
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin successfully toggled.
   * @retval RTEMS_UNSATISFIED Could not toggle pin.
   */
-extern rtems_status_code rtems_gpio_toggle_pin(rtems_gpio_t *gpiox);
+extern rtems_status_code rtems_gpio_toggle_pin_default(rtems_gpio_t *gpiox);
+
+/**
+  * @brief Toggles the state of a GPIO pin using GPIO expander.
+  *        If using GPIO expander, the BSP should implement 
+  *        this function.
+
+  *
+  * @param[in] gpiox The GPIO object that has information about the
+  *                  pin.
+  *
+  * @retval RTEMS_SUCCESSFUL Pin successfully toggled.
+  * @retval If operation fails, return the status code from
+  *         the internal function that performs this operation.
+  *         If no such function exists, return RTEMS_UNSATISFIED.
+  */
+extern rtems_status_code rtems_gpio_toggle_pin_ex(rtems_gpio_t *gpiox);
 
 /** @} */
 

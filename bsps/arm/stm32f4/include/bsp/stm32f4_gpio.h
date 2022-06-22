@@ -1,13 +1,20 @@
+/*
+ *  Copyright (c) 2022 Duc Doan <dtbpkmte at gmail.com>
+ *
+ *  The license and distribution terms for this file may be
+ *  found in the file LICENSE in this distribution or at
+ *  http://www.rtems.org/license/LICENSE.
+ */
+ 
 #ifndef LIBBSP_STM32F4_GPIO
 #define LIBBSP_STM32F4_GPIO
 
 #include <stm32f4xx.h>
 #include <bsp/gpio2.h>
 
-struct rtems_gpio_t {
+typedef struct {
     GPIO_TypeDef *port;
-    uint16_t pin;
-};
+} stm32f4_gpio_t;
 
 /**
   * This structure should be initialized to 0 
@@ -17,7 +24,7 @@ struct rtems_gpio_t {
   * a mode by setting the correct field (is_event_mode or is_alternate_mode)
   * to 1.
   */
-struct rtems_gpio_config_t {
+typedef struct {
     uint32_t speed;             /* Speed of the pin. Must be specified */
                                    
     uint32_t interrupt_mode;    /* The type of interrupt trigger of the pin 
@@ -36,6 +43,8 @@ struct rtems_gpio_config_t {
                                    Use if the pin is in Alternate mode */
     uint32_t alternate_fn;      /* The alternate function of the pin
                                    Use if the pin is in Alternate mode */
-};
+} stm32f4_gpio_config_t;
+
+#define STM32F4_GPIO_PIN_A0 {GPIO_PIN_0, 0, (void *) (GPIOA)}
 
 #endif
