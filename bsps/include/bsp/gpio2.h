@@ -48,12 +48,11 @@ typedef enum {
     RTEMS_GPIO_PINMODE_OUTPUT_OD,
     RTEMS_GPIO_PINMODE_INPUT,
     RTEMS_GPIO_PINMODE_ANALOG,
-    RTEMS_GPIO_PINMODE_INTERRUPT,
     RTEMS_GPIO_PINMODE_BSP_SPECIFIC
 } rtems_gpio_pin_mode;
 
 /**
-  * @brief GPIO pull register configuration. Defines pull-up or 
+  * @brief GPIO pull resistor configuration. Defines pull-up or 
   *        pull-down activation.
   */
 typedef enum {
@@ -66,10 +65,10 @@ typedef enum {
   * @brief Interrupt modes enumeration
   */
 typedef enum {
-    NONE = 0,
-    FALLING,
-    RISING,
-    BOTH_EDGES
+    RTEMS_GPIO_INT_MODE_NONE = 0,
+    RTEMS_GPIO_INT_MODE_FALLING,
+    RTEMS_GPIO_INT_MODE_RISING,
+    RTEMS_GPIO_INT_MODE_BOTH_EDGES
 } rtems_gpio_interrupt;
 
 /**
@@ -79,10 +78,14 @@ typedef enum {
   * 
   */
 typedef struct {
-    uint32_t pin_mask;  /* The pin number or pin mask */
-    bool is_expanded;   /* If the GPIO is an expander, set to true.
-                           Else false. */
-    void *bsp;          /* Pointer to BSP-specific data */
+    void *port;                 /* Pointer to the GPIO port */
+    uint32_t pin_mask;          /* The pin number or pin mask */
+    bool is_expander;           /* If the GPIO is an expander, set to true.
+                                   Else false. */
+    uint32_t expander_id;       /* This field specifies which GPIO expander is
+                                   in use. In case of using multiple expanders,
+                                   this field is necessary to handle each. */
+    void *bsp;                  /* Pointer to BSP-specific data */
 } rtems_gpio_t;
 
 /**
@@ -91,13 +94,17 @@ typedef struct {
   */
 typedef struct {
     rtems_gpio_pin_mode mode;   /* Pin mode */
-    rtems_gpio_pull pull;       /* Pull register configuration */
+    rtems_gpio_pull pull;       /* Pull resistor configuration */
     void *bsp;                  /* Pointer to BSP-specific config */
 } rtems_gpio_config_t;
 
 typedef struct {
-    rtems_gpio_interrupt interrupt_mode;
-    void * callback;
+    rtems_gpio_interrupt interrupt_mode;        /* Interrupt trigger mode */
+    uint32_t interrupt_number;                  /* Interrupt number */
+    uint32_t priority;                          /* Interrupt priority */
+    void *bsp;                                  /* Pointer to BSP-specific config */
+    void (*handler) (void *arg);                /* Pointer to the IRQ handler */
+    void *arg;                                  /* Pointer to the arguments of IRQ handler */
 } rtems_gpio_interrupt_config_t;
 
 /** @} */
@@ -117,7 +124,7 @@ typedef struct {
   * @retval RTEMS_SUCCESSFUL GPIO successfully initialized.
   * @retval RTEMS_UNSATISFIED Could not initialize GPIO object.
   */
-rtems_status_code rtems_gpio_initialize(void);
+extern rtems_status_code rtems_gpio_initialize(void);
 
 /**
   * @brief Configures a GPIO object.
@@ -129,7 +136,13 @@ rtems_status_code rtems_gpio_initialize(void);
   * @retval RTEMS_SUCCESSFUL GPIO configured successfully.
   * @retval RTEMS_UNSATISFIED Could not configure GPIO object.
   */
-extern rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_pin_mode mode, rtems_gpio_pull pull, rtems_gpio_config_t *config);
+extern rtems_status_code rtems_gpio_configure(rtems_gpio_t *gpiox, rtems_gpio_config_t *config);
+
+extern rtems_status_code rtems_gpio_set_pin_mode(rtems_gpio_t *gpiox, rtems_gpio_pin_mode mode);
+
+extern rtems_status_code rtems_gpio_set_pull(rtems_gpio_t *gpiox, rtems_gpio_pull pull);
+
+extern rtems_status_code rtems_gpio_configure_interrupt(rtems_gpio_t *gpiox, rtems_gpio_interrupt_config_t *int_conf);
 
 /**
   * @brief Writes a digital value to a pin. It selects between the
@@ -162,7 +175,11 @@ extern rtems_status_code rtems_gpio_write_pin_default(rtems_gpio_t *gpiox, rtems
 /**
   * @brief Writes a digital value to a pin using GPIO expander.
   *        If using GPIO expander, the BSP should implement 
-  *        this function.
+  *        this function. 
+  *        In case of multiple expanders, this function should
+  *        handle all of them. The field expander_id of gpiox
+  *        might be helpful to differentiate among different
+  *        expanders.
   *
   * @param[in] gpiox The GPIO object that has information about the
   *                  pin.
@@ -210,6 +227,10 @@ extern rtems_status_code rtems_gpio_read_pin_default(rtems_gpio_t *gpiox, rtems_
   * @brief Reads the digital value of a pin using GPIO expander.
   *        If using GPIO expander, the BSP should implement 
   *        this function.
+  *        In case of multiple expanders, this function should
+  *        handle all of them. The field expander_id of gpiox
+  *        might be helpful to differentiate among different
+  *        expanders.
   *
   * @param[in] gpiox The GPIO object that has information about the
   *                  pin.
@@ -228,7 +249,7 @@ extern rtems_status_code rtems_gpio_read_pin_ex(rtems_gpio_t *gpiox, rtems_gpio_
   * @brief Toggles the state of a GPIO pin. It selects between the
   *        default function (built-in GPIO) and GPIO expander
   *        function based on is_expander field of gpiox.
-
+  *
   *
   * @param[in] gpiox The GPIO object that has information about the
   *                  pin.
@@ -255,7 +276,10 @@ extern rtems_status_code rtems_gpio_toggle_pin_default(rtems_gpio_t *gpiox);
   * @brief Toggles the state of a GPIO pin using GPIO expander.
   *        If using GPIO expander, the BSP should implement 
   *        this function.
-
+  *        In case of multiple expanders, this function should
+  *        handle all of them. The field expander_id of gpiox
+  *        might be helpful to differentiate among different
+  *        expanders.
   *
   * @param[in] gpiox The GPIO object that has information about the
   *                  pin.
