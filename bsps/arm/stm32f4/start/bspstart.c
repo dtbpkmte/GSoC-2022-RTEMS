@@ -213,11 +213,13 @@ static void init_main_osc( void )
 #endif /* __rtems__ */
 #ifdef __rtems__
     HAL_Init();
-    rtems_status_code status = rtems_gpio_initialize();
+/*
+   rtems_status_code status = rtems_gpio_initialize();
     if (status != RTEMS_SUCCESSFUL) {
         Error_Handler();
     }
-    status = SystemClock_Config();   
+*/
+    rtems_status_code status = SystemClock_Config();   
     if (status != RTEMS_SUCCESSFUL) {
         Error_Handler();
     }
@@ -470,7 +472,7 @@ void bsp_start( void )
 {
     init_main_osc();
 
-#ifdef __rtems__
+#ifndef __rtems__
     stm32f4_gpio_set_config_array( &stm32f4_start_config_gpio[ 0 ] );
 #endif /* __rtems__ */
 

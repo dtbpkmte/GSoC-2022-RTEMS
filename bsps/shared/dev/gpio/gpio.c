@@ -18,8 +18,8 @@
 #include <rtems/sysinit.h>
 
 
-__attribute__((weak)) rtems_status_code rtems_gpio_initialize(void) {
-    return RTEMS_SUCCESSFUL;
+__attribute__((weak)) void rtems_gpio_initialize(void) {
+    (void)(0U);
 }
 
 RTEMS_SYSINIT_ITEM(
