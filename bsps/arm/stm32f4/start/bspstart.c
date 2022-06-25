@@ -19,7 +19,6 @@
 #endif /* __rtems__ */
 #ifdef __rtems__
 #include <stm32f4xx.h>
-#include <bsp/gpio2.h>
 #endif /* __rtems__ */
 
 #ifdef STM32F4_FAMILY_F4XXXX

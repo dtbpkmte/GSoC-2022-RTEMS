@@ -14,10 +14,17 @@
 #include <stm32f4xx_ll_gpio.h>
 #include <bsp/gpio2.h>
 
+typedef struct {
+    rtems_gpio_ctrl_t base;
+    GPIO_TypeDef *port;
+    bool is_registered;
+} stm32f4_gpio_ctrl_t;
+
 /**
   * @brief STM32F4-specific interrupt configuration structure.
   */
 typedef struct {
+    rtems_gpio_interrupt_config_t base;
     uint32_t subpriority;  /* Subpriority level of the IRQ */
     bool is_event_mode;     /* Set to true if using Event mode */
 } stm32f4_gpio_interrupt_config_t;
@@ -31,6 +38,8 @@ typedef struct {
   *        to 1.
   */
 typedef struct {
+    rtems_gpio_config_t base;   /* Base GPIO config object */
+
     uint32_t speed;             /* Speed of the pin. Must be specified */
 
     uint32_t alternate_mode;    /* Open drain or Push-pull mode
@@ -38,5 +47,7 @@ typedef struct {
     uint32_t alternate_fn;      /* The alternate function of the pin
                                    Use if the pin is in Alternate mode */
 } stm32f4_gpio_config_t;
+
+rtems_status_code stm32f4_gpio_get_ctrl(GPIO_TypeDef *port, rtems_gpio_ctrl_t **out);
 
 #endif /* LIBBSP_ARM_STM32F4_BSP_GPIO */
