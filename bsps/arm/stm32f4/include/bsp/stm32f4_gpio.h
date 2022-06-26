@@ -48,6 +48,6 @@ typedef struct {
                                    Use if the pin is in Alternate mode */
 } stm32f4_gpio_config_t;
 
-rtems_status_code stm32f4_gpio_get_ctrl(GPIO_TypeDef *port, rtems_gpio_ctrl_t **out);
+rtems_status_code stm32f4_gpio_get_ctrl(void *arg, rtems_gpio_ctrl_t **out);
 
 #endif /* LIBBSP_ARM_STM32F4_BSP_GPIO */

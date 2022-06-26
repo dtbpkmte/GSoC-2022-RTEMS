@@ -93,14 +93,20 @@ stm32f4_gpio_ctrl_t gpiod_ctrl = { .port = GPIOD };
 stm32f4_gpio_ctrl_t gpioe_ctrl = { .port = GPIOE };
 stm32f4_gpio_ctrl_t gpiof_ctrl = { .port = GPIOF };
 stm32f4_gpio_ctrl_t gpiog_ctrl = { .port = GPIOG };
-stm32f4_gpio_ctrl_t gpioh_ctrl = { .port = GPIOG };
+stm32f4_gpio_ctrl_t gpioh_ctrl = { .port = GPIOH };
 stm32f4_gpio_ctrl_t gpioi_ctrl = { .port = GPIOI };
 #ifdef STM32F429X
 stm32f4_gpio_ctrl_t gpioj_ctrl = { .port = GPIOJ };
 stm32f4_gpio_ctrl_t gpiok_ctrl = { .port = GPIOK };
 #endif /* STM32F429X */
 
-rtems_status_code stm32f4_gpio_get_ctrl(GPIO_TypeDef *port, rtems_gpio_ctrl_t **out) {
+rtems_status_code stm32f4_gpio_get_ctrl(
+    void *arg, 
+    rtems_gpio_ctrl_t **out
+) 
+{
+    GPIO_TypeDef *port = (GPIO_TypeDef *) arg;
+
     switch ((uintptr_t) port) {
         case (uintptr_t) GPIOA:
             *out = (rtems_gpio_ctrl_t *) &gpioa_ctrl;
@@ -124,7 +130,7 @@ rtems_status_code stm32f4_gpio_get_ctrl(GPIO_TypeDef *port, rtems_gpio_ctrl_t **
             *out = (rtems_gpio_ctrl_t *) &gpiog_ctrl;
             break;
         case (uintptr_t) GPIOH:
-            *out = (rtems_gpio_ctrl_t *) &gpiog_ctrl;
+            *out = (rtems_gpio_ctrl_t *) &gpioh_ctrl;
             break;
         case (uintptr_t) GPIOI:
             *out = (rtems_gpio_ctrl_t *) &gpioi_ctrl;
@@ -331,7 +337,7 @@ rtems_status_code stm32f4_gpio_set_pull(
         /* Illegal argument */
         return RTEMS_UNSATISFIED;
     }
-    LL_GPIO_SetPinPull((GPIO_TypeDef *) ctrl->port, pin_mask, stm32f4_pull);
+    LL_GPIO_SetPinPull(ctrl->port, pin_mask, stm32f4_pull);
     return RTEMS_SUCCESSFUL;
 }
 

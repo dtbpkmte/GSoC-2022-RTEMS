@@ -144,6 +144,22 @@ struct rtems_gpio_interrupt_config {
   * @{
   */
 
+/**
+  * @brief Get an GPIO control object.
+  *
+  * This macro requires BSPs/drivers to correctly implement
+  * function <driver_name>_gpio_get_ctrl(void *arg, 
+  * rtems_gpio_ctrl_t **out).
+  *
+  * @param _driver is the name of the BSP/GPIO driver
+  * @param[in] _arg is the void pointer to an argument type
+  *        defined by BSP/driver
+  * @param[out] _out is the pointer to the pointer to where
+  *             the output object will be stored
+  */
+#define rtems_gpio_get_ctrl(_driver, _arg, _out) \
+    _driver##_gpio_get_ctrl( _arg , _out )
+
 extern void rtems_gpio_register(
     rtems_gpio_ctrl_t *base,
     const rtems_gpio_handlers_t *handlers
