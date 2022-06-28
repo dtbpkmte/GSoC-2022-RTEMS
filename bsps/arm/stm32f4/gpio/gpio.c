@@ -368,8 +368,20 @@ rtems_status_code stm32f4_gpio_configure_interrupt(
             NULL, 
             RTEMS_INTERRUPT_UNIQUE, 
             isr, 
-            NULL);
+            arg);
 
+    return sc;
+}
+
+static rtems_status_code stm32f4_gpio_remove_interrupt(
+    rtems_gpio_t *base
+)
+{
+    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    rtems_status_code sc = rtems_interrupt_handler_remove(
+            STM32F4_GET_EXTI_IRQn(gpio->pin), 
+            isr, 
+            arg);
     return sc;
 }
 
@@ -378,7 +390,6 @@ static rtems_status_code stm32f4_gpio_enable_interrupt(
 ) 
 {
     stm32f4_gpio_t *gpio = get_gpio_from_base(base);
-    uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(pin_mask);
     LL_EXTI_EnableIT_0_31(STM32F4_GET_LL_EXTI_LINE(gpio->pin));
     return RTEMS_SUCCESSFUL;
 }
@@ -388,7 +399,6 @@ static rtems_status_code stm32f4_gpio_disable_interrupt(
 ) 
 {
     stm32f4_gpio_t *gpio = get_gpio_from_base(base);
-    uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(pin_mask);
     LL_EXTI_DisableIT_0_31(STM32F4_GET_LL_EXTI_LINE(gpio->pin));
     return RTEMS_SUCCESSFUL;
 }
@@ -428,159 +438,159 @@ rtems_status_code stm32f4_gpio_toggle(
     return RTEMS_SUCCESSFUL;
 }
 
-//void exti0_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti0_isr(stm32_arg);
-//    }
-//}
-//void exti1_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti1_isr(stm32_arg);
-//    }
-//}
-//void exti2_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti2_isr(stm32_arg);
-//    }
-//}
-//void exti3_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti3_isr(stm32_arg);
-//    }
-//}
-//void exti4_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti4_isr(stm32_arg);
-//    }
-//}
-//void exti5_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti5_isr(stm32_arg);
-//    }
-//}
-//void exti6_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti6_isr(stm32_arg);
-//    }
-//}
-//void exti7_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti7_isr(stm32_arg);
-//    }
-//}
-//void exti8_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti8_isr(stm32_arg);
-//    }
-//}
-//void exti9_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti9_isr(stm32_arg);
-//    }
-//}
-//void exti10_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti10_isr(stm32_arg);
-//    }
-//}
-//void exti11_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti11_isr(stm32_arg);
-//    }
-//}
-//void exti12_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti12_isr(stm32_arg);
-//    }
-//}
-//void exti13_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti13_isr(stm32_arg);
-//    }
-//}
-//void exti14_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti14_isr(stm32_arg);
-//    }
-//}
-//void exti15_handler(void *arg) {
-//    stm32f4_interrupt_arg_t *stm32_arg;
-//    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-//    {
-//        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-//        stm32f4_isr_table->exti15_isr(stm32_arg);
-//    }
-//}
-//void stm32f4_default_exti_isr(stm32f4_interrupt_arg_t * arg) {
-//    (void) (0U);
-//}
-//
-//typedef struct {
-//    uint32_t pin;
-//} stm32f4_interrupt_arg_t;
-//
-//typedef (void *) (stm32f4_interrupt_arg_t *) stm32f4_isr_f;
-//
-//struct {
-//    stm32f4_isr_f exti0_isr;
-//    stm32f4_isr_f exti1_isr;
-//    stm32f4_isr_f exti2_isr;
-//    stm32f4_isr_f exti3_isr;
-//    stm32f4_isr_f exti4_isr;
-//    stm32f4_isr_f exti5_isr;
-//    stm32f4_isr_f exti6_isr;
-//    stm32f4_isr_f exti7_isr;
-//    stm32f4_isr_f exti8_isr;
-//    stm32f4_isr_f exti9_isr;
-//    stm32f4_isr_f exti10_isr;
-//    stm32f4_isr_f exti11_isr;
-//    stm32f4_isr_f exti12_isr;
-//    stm32f4_isr_f exti13_isr;
-//    stm32f4_isr_f exti14_isr;
-//    stm32f4_isr_f exti15_isr;
-//} stm32f4_isr_table;
+void exti0_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti0_isr(stm32_arg);
+    }
+}
+void exti1_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti1_isr(stm32_arg);
+    }
+}
+void exti2_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti2_isr(stm32_arg);
+    }
+}
+void exti3_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti3_isr(stm32_arg);
+    }
+}
+void exti4_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti4_isr(stm32_arg);
+    }
+}
+void exti5_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti5_isr(stm32_arg);
+    }
+}
+void exti6_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti6_isr(stm32_arg);
+    }
+}
+void exti7_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti7_isr(stm32_arg);
+    }
+}
+void exti8_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti8_isr(stm32_arg);
+    }
+}
+void exti9_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti9_isr(stm32_arg);
+    }
+}
+void exti10_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti10_isr(stm32_arg);
+    }
+}
+void exti11_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti11_isr(stm32_arg);
+    }
+}
+void exti12_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti12_isr(stm32_arg);
+    }
+}
+void exti13_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti13_isr(stm32_arg);
+    }
+}
+void exti14_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti14_isr(stm32_arg);
+    }
+}
+void exti15_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+    {
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
+        stm32f4_isr_table->exti15_isr(stm32_arg);
+    }
+}
+void stm32f4_default_exti_isr(stm32f4_interrupt_arg_t * arg) {
+    (void) (0U);
+}
+
+typedef struct {
+    uint32_t pin;
+} stm32f4_interrupt_arg_t;
+
+typedef void (stm32f4_isr_f*)(stm32f4_interrupt_arg_t *);
+
+struct {
+    stm32f4_isr_f exti0_isr;
+    stm32f4_isr_f exti1_isr;
+    stm32f4_isr_f exti2_isr;
+    stm32f4_isr_f exti3_isr;
+    stm32f4_isr_f exti4_isr;
+    stm32f4_isr_f exti5_isr;
+    stm32f4_isr_f exti6_isr;
+    stm32f4_isr_f exti7_isr;
+    stm32f4_isr_f exti8_isr;
+    stm32f4_isr_f exti9_isr;
+    stm32f4_isr_f exti10_isr;
+    stm32f4_isr_f exti11_isr;
+    stm32f4_isr_f exti12_isr;
+    stm32f4_isr_f exti13_isr;
+    stm32f4_isr_f exti14_isr;
+    stm32f4_isr_f exti15_isr;
+} stm32f4_isr_table;
