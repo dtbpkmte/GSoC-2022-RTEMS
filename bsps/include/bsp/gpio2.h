@@ -26,10 +26,11 @@
 #ifndef CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 
 
 #ifndef BSP_GPIO_NUM_CONTROLLERS
-#error "BSP_GPIO_NUM_CONTROLLERS is not defined by BSP"
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 1
+#else
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS BSP_GPIO_NUM_CONTROLLERS
 #endif
 
-#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS BSP_GPIO_NUM_CONTROLLERS
 
 #endif
 /***********************************************/
@@ -80,10 +81,12 @@ typedef enum {
   * @brief Interrupt modes enumeration
   */
 typedef enum {
-    RTEMS_GPIO_INT_MODE_NONE = 0,
-    RTEMS_GPIO_INT_MODE_FALLING,
-    RTEMS_GPIO_INT_MODE_RISING,
-    RTEMS_GPIO_INT_MODE_BOTH_EDGES
+    RTEMS_GPIO_INT_TRIG_NONE = 0,
+    RTEMS_GPIO_INT_TRIG_FALLING,
+    RTEMS_GPIO_INT_TRIG_RISING,
+    RTEMS_GPIO_INT_TRIG_BOTH_EDGES,
+    RTEMS_GPIO_INT_TRIG_LOW,
+    RTEMS_GPIO_INT_TRIG_HIGH
 } rtems_gpio_interrupt_trig_t;
 
 typedef struct rtems_gpio_handlers rtems_gpio_handlers_t;
@@ -125,6 +128,7 @@ struct rtems_gpio_handlers {
   */
 struct rtems_gpio {
     const rtems_gpio_handlers_t *handlers;
+    uint32_t virtual_pin;
 };
 
 /** @} */
@@ -150,17 +154,6 @@ extern rtems_status_code bsp_gpio_register_controllers(
 );
 
 /** @} */
-
-/**
-  * @name GPIO initialization
-  *
-  * @{
-  */
-
-extern rtems_status_code rtems_gpio_register(
-    rtems_gpio_t (*get_gpio)(uint32_t),
-    uint32_t max_pin
-);
 
 
 /** @} */
@@ -215,18 +208,21 @@ extern rtems_status_code rtems_gpio_destroy(
   * @brief Registers a GPIO controller with GPIO manager.
   *
   * This function registers the pointer to BSP/driver-specific
-  * get_gpio() function
+  * get_gpio() and destroy_gpio() functions. Those two functions
+  * are for creating and destroying GPIO objects.
   *
   * @param get_gpio The pointer to BSP/driver-specific get_gpio()
-  * @param max_pin The maximum intermediate pin index, counting
-  *                from 0
+  * @param destroy_gpio The pointer to BSP/driver-specific 
+  *        destroy_gpio()
+  * @param pin_count The number of GPIO pins in the controller
   *
   * @retval RTEMS_SUCCESSFUL Controller registered successfully
   * @retval RTEMS_UNSATISFIED Controller cannot be registered
   */
 extern rtems_status_code rtems_gpio_register(
     rtems_status_code (*get_gpio)(uint32_t, rtems_gpio_t **),
-    uint32_t max_pin
+    rtems_status_code (*destroy_gpio)(rtems_gpio_t *),
+    uint32_t pin_count
 );
 
 /**
@@ -237,7 +233,7 @@ extern rtems_status_code rtems_gpio_register(
   * It is called automatically when the BSP starts.
   *
   */
-extern rtems_status_code rtems_gpio_begin(
+extern void rtems_gpio_begin(
     void
 );
 
@@ -295,19 +291,19 @@ extern rtems_status_code rtems_gpio_configure_interrupt(
     rtems_gpio_isr_t isr,
     void *arg,
     rtems_gpio_interrupt_trig_t trig,
-    rtems_gpio_pull_t pull;
+    rtems_gpio_pull_t pull
 );
 
 extern rtems_status_code rtems_gpio_remove_interrupt(
-    rtems_gpio_t *base,
+    rtems_gpio_t *base
 );
 
 extern rtems_status_code rtems_gpio_enable_interrupt(
-    rtems_gpio_t *base,
+    rtems_gpio_t *base
 );
 
 extern rtems_status_code rtems_gpio_disable_interrupt(
-    rtems_gpio_t *base,
+    rtems_gpio_t *base
 );
 
 /**
@@ -362,7 +358,7 @@ extern rtems_status_code rtems_gpio_read(
   * @retval * @see rtems_gpio_toggle_pin_ex().
   */
 extern rtems_status_code rtems_gpio_toggle(
-    rtems_gpio_t *base, 
+    rtems_gpio_t *base
 );
 
 /** @} */

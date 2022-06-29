@@ -11,16 +11,26 @@
 #include <bsp.h>
 #include <rtems.h>
 #include <bsp/stm32f4_gpio.h>
+#include <stdlib.h>
 
-/**
-  * GPIO API requirement.
-  */
-#define BSP_GPIO_NUM_CONTROLLERS        1
+/*********** Helpers *****************/
+static stm32f4_gpio_t *get_gpio_from_base(
+    rtems_gpio_t *base
+);
 
 /**
   * Static functions prototypes. 
   * Implementing GPIO API.
   */
+static rtems_status_code stm32f4_gpio_get(
+    uint32_t interm_pin,
+    rtems_gpio_t **out
+);
+
+static rtems_status_code stm32f4_gpio_destroy(
+    rtems_gpio_t *base
+);
+
 static rtems_status_code stm32f4_gpio_init(
     rtems_gpio_t *base
 );
@@ -42,6 +52,7 @@ static rtems_status_code stm32f4_gpio_set_pull(
 static rtems_status_code stm32f4_gpio_configure_interrupt(
     rtems_gpio_t *base, 
     rtems_gpio_isr_t isr,
+    void *arg,
     rtems_gpio_interrupt_trig_t trig,
     rtems_gpio_pull_t pull
 );
@@ -51,25 +62,25 @@ static rtems_status_code stm32f4_gpio_remove_interrupt(
 );
 
 static rtems_status_code stm32f4_gpio_enable_interrupt(
-    rtems_gpio_t *base,
+    rtems_gpio_t *base
 );
 
 static rtems_status_code stm32f4_gpio_disable_interrupt(
-    rtems_gpio_t *base,
+    rtems_gpio_t *base
 );
 
 static rtems_status_code stm32f4_gpio_read(
     rtems_gpio_t *base,
-    rtems_gpio_pin_state *value
+    rtems_gpio_pin_state_t *value
 );
 
 static rtems_status_code stm32f4_gpio_write(
     rtems_gpio_t *base,
-    rtems_gpio_pin_state value
+    rtems_gpio_pin_state_t value
 );
 
 static rtems_status_code stm32f4_gpio_toggle(
-    rtems_gpio_t *base,
+    rtems_gpio_t *base
 );
 
 /**
@@ -89,7 +100,7 @@ static const rtems_gpio_handlers_t stm32f4_gpio_handlers = {
     .toggle = stm32f4_gpio_toggle
 };
 
-static const GPIO_TypeDef *GPIOx[] = {
+static GPIO_TypeDef *GPIOx[] = {
     GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
     GPIOF, GPIOG, GPIOH, GPIOI,
 #ifdef STM32F429X
@@ -97,14 +108,47 @@ static const GPIO_TypeDef *GPIOx[] = {
 #endif /* STM32F429X */
 };
 
-#define STM32F4_GET_PORT(interm_pin) ( GPIOx[ ( interm_pin ) / 16 ] )
+static uint16_t GPIO_PIN_x[] = {
+    GPIO_PIN_0,
+    GPIO_PIN_1,
+    GPIO_PIN_2,
+    GPIO_PIN_3,
+    GPIO_PIN_4,
+    GPIO_PIN_5,
+    GPIO_PIN_6,
+    GPIO_PIN_7,
+    GPIO_PIN_8,
+    GPIO_PIN_9,
+    GPIO_PIN_10,
+    GPIO_PIN_11,
+    GPIO_PIN_12,
+    GPIO_PIN_13,
+    GPIO_PIN_14,
+    GPIO_PIN_15
+};
 
-#define STM32F4_GET_PIN_0_15(interm_pin) ( ( interm_pin ) % 16 ) 
+static uint32_t LL_EXTI_LINE_x[] = {
+    LL_EXTI_LINE_0,
+    LL_EXTI_LINE_1,
+    LL_EXTI_LINE_2,
+    LL_EXTI_LINE_3,
+    LL_EXTI_LINE_4,
+    LL_EXTI_LINE_5,
+    LL_EXTI_LINE_6,
+    LL_EXTI_LINE_7,
+    LL_EXTI_LINE_8,
+    LL_EXTI_LINE_9,
+    LL_EXTI_LINE_10,
+    LL_EXTI_LINE_11,
+    LL_EXTI_LINE_12,
+    LL_EXTI_LINE_13,
+    LL_EXTI_LINE_14,
+    LL_EXTI_LINE_15
+};
 
-#define STM32F4_GET_HAL_GPIO_PIN(pin) ( GPIO_PIN_##pin )
-
-#define STM32F4_GET_LL_EXTI_LINE(pin) ( LL_EXTI_LINE_##pin )
-
+/**
+  * Additional EXTI defines for convenience
+  */
 #define EXTI5_IRQn      EXTI9_5_IRQn
 #define EXTI6_IRQn      EXTI9_5_IRQn
 #define EXTI7_IRQn      EXTI9_5_IRQn
@@ -117,11 +161,105 @@ static const GPIO_TypeDef *GPIOx[] = {
 #define EXTI14_IRQn     EXTI15_10_IRQn
 #define EXTI15_IRQn     EXTI15_10_IRQn
 
-#define STM32F4_GET_EXTI_IRQn(pin) ( EXTI##pin##_IRQn )
+static unsigned int EXTIx_IRQn[] = {
+    EXTI0_IRQn,
+    EXTI1_IRQn,
+    EXTI2_IRQn,
+    EXTI3_IRQn,
+    EXTI4_IRQn,
+    EXTI5_IRQn,
+    EXTI6_IRQn,
+    EXTI7_IRQn,
+    EXTI8_IRQn,
+    EXTI9_IRQn,
+    EXTI10_IRQn,
+    EXTI11_IRQn,
+    EXTI12_IRQn,
+    EXTI13_IRQn,
+    EXTI14_IRQn,
+    EXTI15_IRQn
+};
+
+/**
+  * @brief Converts intermediate pin number to port pointer.
+  *
+  * Intermediate pin number is a way of numerically labeling
+  * pins. Pins are labeled incrementally across all ports.
+  * Pins 0-15 from port A are 0-15. Pins 0-15 from port B are
+  * 16-31. And so on.
+  *
+  * @param interm_pin is the intermediate pin number
+  */
+#define STM32F4_GET_PORT(interm_pin) (GPIOx[ ( interm_pin ) / 16 ])
+
+/**
+  * @brief Converts intermediate pin number to 0-15.
+  *
+  * Intermediate pin number is a way of numerically labeling
+  * pins. Pins are labeled incrementally across all ports.
+  * Pins 0-15 from port A are 0-15. Pins 0-15 from port B are
+  * 16-31. And so on.
+  *
+  * @param interm_pin is the intermediate pin number
+  */
+#define STM32F4_GET_PIN_0_15(interm_pin) (( interm_pin ) % 16) 
+
+/**
+  * @brief Converts pin number from 0-15 to HAL pin mask.
+  * @param pin is the pin number from 0-15
+  */
+#define STM32F4_GET_HAL_GPIO_PIN(pin) (GPIO_PIN_x[( pin )])
+
+/**
+  * @brief Get EXTI Line from pin number 0-15
+  * @param pin is the pin number from 0-15
+  */
+#define STM32F4_GET_LL_EXTI_LINE(pin) (LL_EXTI_LINE_x[( pin )])
+
+/**
+  * @brief Get EXTI IRQ number from pin 0-15
+  * @param pin is the pin number from 0-15
+  */
+#define STM32F4_GET_EXTI_IRQn(pin) (EXTIx_IRQn[( pin )])
+
+/************** Interrupt manager *****************/
+typedef struct {
+    void *arg;
+    stm32f4_gpio_t *gpio;
+} stm32f4_interrupt_arg_t;
+
+typedef struct {
+    stm32f4_interrupt_arg_t arg;
+    rtems_gpio_isr_t isr;
+} stm32f4_interrupt_t;
+
+static stm32f4_interrupt_t isr_table[15]; 
+
+void exti_handler(void *arg);
+
+/************* Helpers implementation ********************/
+
+static stm32f4_gpio_t *get_gpio_from_base(
+    rtems_gpio_t *base
+) 
+{
+    return RTEMS_CONTAINER_OF(base, stm32f4_gpio_t, base);
+}
 
 /********** STM32F4 GPIO API functions ************/
 
-rtems_status_code stm32f4_gpio_get(
+rtems_status_code bsp_gpio_register_controllers(
+    void
+)
+{
+    return rtems_gpio_register(
+            stm32f4_gpio_get,
+            stm32f4_gpio_destroy,
+            sizeof(GPIOx)/sizeof(GPIOx[0])*16
+    );
+}
+
+static rtems_status_code stm32f4_gpio_get(
     uint32_t interm_pin,
     rtems_gpio_t **out
 )
@@ -130,19 +268,21 @@ rtems_status_code stm32f4_gpio_get(
     if (tmp == NULL) {
         return RTEMS_NO_MEMORY;
     }
-    tmp->base = { .handlers = &stm32f4_gpio_handlers };
+    tmp->base = (rtems_gpio_t) { .handlers = &stm32f4_gpio_handlers };
     tmp->pin = STM32F4_GET_PIN_0_15(interm_pin);
     tmp->port = STM32F4_GET_PORT(interm_pin);
     
-    *out = tmp;
+    *out = (rtems_gpio_t *) tmp;
     return RTEMS_SUCCESSFUL;
 }
 
-static stm32f4_gpio_t *get_gpio_from_base(
+static rtems_status_code stm32f4_gpio_destroy(
     rtems_gpio_t *base
-) 
+)
 {
-    return RTEMS_CONTAINER_OF(base, stm32f4_gpio_t, base);
+    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    free(gpio);
+    return RTEMS_SUCCESSFUL;
 }
 
 static rtems_status_code stm32f4_gpio_init(rtems_gpio_t *base) {
@@ -240,7 +380,7 @@ static rtems_status_code stm32f4_gpio_deinit(rtems_gpio_t *base) {
   * @note If using interrupt mode, use rtems_gpio_configure_interrupt().
   * @note If using alternate mode, use rtems_gpio_configure().
   */
-rtems_status_code stm32f4_gpio_set_pin_mode(
+static rtems_status_code stm32f4_gpio_set_pin_mode(
     rtems_gpio_t *base, 
     rtems_gpio_pin_mode_t mode
 ) 
@@ -250,7 +390,6 @@ rtems_status_code stm32f4_gpio_set_pin_mode(
 
     uint32_t stm32f4_mode, stm32f4_output_type;
     switch (mode) {
-    case RTEMS_GPIO_PINMODE_OUTPUT:
     case RTEMS_GPIO_PINMODE_OUTPUT_PP:
         stm32f4_mode = LL_GPIO_MODE_OUTPUT;
         stm32f4_output_type = LL_GPIO_OUTPUT_PUSHPULL;
@@ -283,7 +422,7 @@ rtems_status_code stm32f4_gpio_set_pin_mode(
 /**
   * @note Warning: only one pin can be passed as argument
   */
-rtems_status_code stm32f4_gpio_set_pull(
+static rtems_status_code stm32f4_gpio_set_pull(
     rtems_gpio_t *base, 
     rtems_gpio_pull_t pull
 ) 
@@ -306,7 +445,7 @@ rtems_status_code stm32f4_gpio_set_pull(
         /* Illegal argument */
         return RTEMS_UNSATISFIED;
     }
-    LL_GPIO_SetPinPull(gpio->port, gpio->pin, stm32f4_pull);
+    LL_GPIO_SetPinPull(gpio->port, pin_mask, stm32f4_pull);
     return RTEMS_SUCCESSFUL;
 }
 
@@ -316,7 +455,7 @@ rtems_status_code stm32f4_gpio_set_pull(
   * @note This function defaults to not using pull resistor.
   *       Use rtems_gpio_set_pull() afterwards to change.
   */
-rtems_status_code stm32f4_gpio_configure_interrupt(
+static rtems_status_code stm32f4_gpio_configure_interrupt(
     rtems_gpio_t *base, 
     rtems_gpio_isr_t isr,
     void *arg,
@@ -363,12 +502,23 @@ rtems_status_code stm32f4_gpio_configure_interrupt(
     HAL_GPIO_Init(gpio->port, &hal_conf);
 
     // RTEMS interrupt config
+    isr_table[gpio->pin] = (stm32f4_interrupt_t){
+        .arg = {
+            .arg = arg,
+            .gpio = gpio
+        },
+        .isr = isr
+    };
+    rtems_option opt = gpio->pin < 5 ? 
+                        RTEMS_INTERRUPT_UNIQUE : 
+                        RTEMS_INTERRUPT_SHARED;
     rtems_status_code sc = rtems_interrupt_handler_install(
             STM32F4_GET_EXTI_IRQn(gpio->pin), 
             NULL, 
-            RTEMS_INTERRUPT_UNIQUE, 
-            isr, 
-            arg);
+            opt, 
+            exti_handler, 
+            &isr_table[gpio->pin].arg
+    );
 
     return sc;
 }
@@ -380,8 +530,11 @@ static rtems_status_code stm32f4_gpio_remove_interrupt(
     stm32f4_gpio_t *gpio = get_gpio_from_base(base);
     rtems_status_code sc = rtems_interrupt_handler_remove(
             STM32F4_GET_EXTI_IRQn(gpio->pin), 
-            isr, 
-            arg);
+            exti_handler, 
+            &isr_table[gpio->pin].arg);
+    if (sc == RTEMS_SUCCESSFUL) {
+        isr_table[gpio->pin] = (stm32f4_interrupt_t){0};
+    }
     return sc;
 }
 
@@ -403,9 +556,9 @@ static rtems_status_code stm32f4_gpio_disable_interrupt(
     return RTEMS_SUCCESSFUL;
 }
 
-rtems_status_code stm32f4_gpio_write(
+static rtems_status_code stm32f4_gpio_write(
     rtems_gpio_t *base, 
-    rtems_gpio_pin_state value
+    rtems_gpio_pin_state_t value
 ) 
 {
     stm32f4_gpio_t *gpio = get_gpio_from_base(base);
@@ -415,9 +568,9 @@ rtems_status_code stm32f4_gpio_write(
     return RTEMS_SUCCESSFUL;
 }
 
-rtems_status_code stm32f4_gpio_read(
+static rtems_status_code stm32f4_gpio_read(
     rtems_gpio_t *base, 
-    rtems_gpio_pin_state *value
+    rtems_gpio_pin_state_t *value
 ) 
 {
     stm32f4_gpio_t *gpio = get_gpio_from_base(base);
@@ -427,8 +580,8 @@ rtems_status_code stm32f4_gpio_read(
     return RTEMS_SUCCESSFUL;
 }
 
-rtems_status_code stm32f4_gpio_toggle(
-    rtems_gpio_t *base, 
+static rtems_status_code stm32f4_gpio_toggle(
+    rtems_gpio_t *base
 ) 
 {
     stm32f4_gpio_t *gpio = get_gpio_from_base(base);
@@ -438,159 +591,12 @@ rtems_status_code stm32f4_gpio_toggle(
     return RTEMS_SUCCESSFUL;
 }
 
-void exti0_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
+void exti_handler(void *arg) {
+    stm32f4_interrupt_arg_t *stm32_arg = (stm32f4_interrupt_arg_t *) arg;
+    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->gpio->pin) != RESET)
     {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti0_isr(stm32_arg);
+        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->gpio->pin);
+        (*isr_table[stm32_arg->gpio->pin].isr)(stm32_arg->arg);
     }
-}
-void exti1_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti1_isr(stm32_arg);
-    }
-}
-void exti2_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti2_isr(stm32_arg);
-    }
-}
-void exti3_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti3_isr(stm32_arg);
-    }
-}
-void exti4_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti4_isr(stm32_arg);
-    }
-}
-void exti5_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti5_isr(stm32_arg);
-    }
-}
-void exti6_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti6_isr(stm32_arg);
-    }
-}
-void exti7_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti7_isr(stm32_arg);
-    }
-}
-void exti8_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti8_isr(stm32_arg);
-    }
-}
-void exti9_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti9_isr(stm32_arg);
-    }
-}
-void exti10_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti10_isr(stm32_arg);
-    }
-}
-void exti11_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti11_isr(stm32_arg);
-    }
-}
-void exti12_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti12_isr(stm32_arg);
-    }
-}
-void exti13_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti13_isr(stm32_arg);
-    }
-}
-void exti14_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti14_isr(stm32_arg);
-    }
-}
-void exti15_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->pin) != RESET)
-    {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->pin);
-        stm32f4_isr_table->exti15_isr(stm32_arg);
-    }
-}
-void stm32f4_default_exti_isr(stm32f4_interrupt_arg_t * arg) {
-    (void) (0U);
 }
 
-typedef struct {
-    uint32_t pin;
-} stm32f4_interrupt_arg_t;
-
-typedef void (stm32f4_isr_f*)(stm32f4_interrupt_arg_t *);
-
-struct {
-    stm32f4_isr_f exti0_isr;
-    stm32f4_isr_f exti1_isr;
-    stm32f4_isr_f exti2_isr;
-    stm32f4_isr_f exti3_isr;
-    stm32f4_isr_f exti4_isr;
-    stm32f4_isr_f exti5_isr;
-    stm32f4_isr_f exti6_isr;
-    stm32f4_isr_f exti7_isr;
-    stm32f4_isr_f exti8_isr;
-    stm32f4_isr_f exti9_isr;
-    stm32f4_isr_f exti10_isr;
-    stm32f4_isr_f exti11_isr;
-    stm32f4_isr_f exti12_isr;
-    stm32f4_isr_f exti13_isr;
-    stm32f4_isr_f exti14_isr;
-    stm32f4_isr_f exti15_isr;
-} stm32f4_isr_table;
