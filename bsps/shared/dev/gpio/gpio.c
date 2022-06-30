@@ -18,6 +18,19 @@
 #include <rtems/sysinit.h>
 
 /**
+  *
+  */
+#ifndef CONFIGURE_GPIO_MAXIMUM_CONTROLLERS
+
+#ifndef BSP_GPIO_NUM_CONTROLLERS
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 1
+#else
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS BSP_GPIO_NUM_CONTROLLERS
+#endif /* BSP_GPIO_NUM_CONTROLLERS */
+
+#endif /* CONFIGURE_GPIO_MAXIMUM_CONTROLLERS */
+
+/**
   * An array to store all registered GPIO controllers.
   */
 static rtems_status_code (*get_gpio_table[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS])(uint32_t, rtems_gpio_t **);
@@ -32,11 +45,13 @@ void rtems_gpio_begin(
     bsp_gpio_register_controllers();   
 }
 
+/*
 RTEMS_SYSINIT_ITEM(
     rtems_gpio_begin,
     RTEMS_SYSINIT_BSP_START,
     RTEMS_SYSINIT_ORDER_LAST
 );
+*/
 
 
 /**
@@ -101,16 +116,6 @@ rtems_status_code rtems_gpio_destroy(
         }
     }
     return RTEMS_UNSATISFIED;
-}
-
-/**
-  * Default implementation for bsp_gpio_register_controllers.
-  */
-__attribute__((weak)) rtems_status_code bsp_gpio_register_controllers(
-    void
-)
-{
-    return RTEMS_NOT_IMPLEMENTED;
 }
 
 rtems_status_code rtems_gpio_init(

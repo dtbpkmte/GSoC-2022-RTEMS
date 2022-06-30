@@ -255,7 +255,7 @@ rtems_status_code bsp_gpio_register_controllers(
     return rtems_gpio_register(
             stm32f4_gpio_get,
             stm32f4_gpio_destroy,
-            sizeof(GPIOx)/sizeof(GPIOx[0])*16
+            144
     );
 }
 

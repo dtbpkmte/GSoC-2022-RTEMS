@@ -20,21 +20,6 @@
 #include <bsp.h>
 #include <rtems.h>
 
-/**
-  * 
-  */
-#ifndef CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 
-
-#ifndef BSP_GPIO_NUM_CONTROLLERS
-#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 1
-#else
-#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS BSP_GPIO_NUM_CONTROLLERS
-#endif
-
-
-#endif
-/***********************************************/
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
