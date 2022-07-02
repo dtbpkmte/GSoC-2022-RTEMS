@@ -18,17 +18,19 @@
 #include <rtems/sysinit.h>
 
 /**
-  * An array to store all registered GPIO controllers.
+  * @brief An array to store all registered GPIO controllers.
   */
 static rtems_status_code (*get_gpio_table[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS])(uint32_t, rtems_gpio **);
 
 /**
-  * An array to store all registered GPIO controllers.
+  * @brief An array to store all registered GPIO controllers.
   */
 static rtems_status_code (*destroy_gpio_table[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS])(rtems_gpio *);
 
 /**
-  * An array to store the boundaries of pin index of controllers.
+  * @brief An array to store the boundaries of pin index of 
+  *        GPIO controllers.
+  *
   * Example with 2 16-pin controllers and 1 32-pin controller,
   * the pin_map will be:
   * { 0, 16, 32, 64}
@@ -38,7 +40,7 @@ static rtems_status_code (*destroy_gpio_table[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS
 static uint32_t pin_map[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS+1] = {0};
 
 /**
-  * The number of controllers registered.
+  * @brief The number of controllers registered.
   */
 static uint32_t num_ctrl = 0;
 
@@ -49,12 +51,6 @@ void rtems_gpio_begin(
     bsp_gpio_register_controllers();   
 }
 
-/**
-  * @brief 
-  *
-  * @retval RTEMS_TOO_MANY if the maximum number of controllers are
-  *         already registered
-  */
 rtems_status_code rtems_gpio_register(
     rtems_status_code (*get_gpio)(uint32_t, rtems_gpio **),
     rtems_status_code (*destroy_gpio)(rtems_gpio *),
