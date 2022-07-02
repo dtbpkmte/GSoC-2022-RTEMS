@@ -42,13 +42,6 @@ extern "C" {
 
 #define BSP_ARMV7M_SYSTICK_FREQUENCY STM32F4_HCLK
 
-#ifdef __rtems__
-/** 
-  * GPIO API requirement. 
-  */ 
-#define BSP_GPIO_NUM_CONTROLLERS        1
-#endif /* __rtems__ */
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
