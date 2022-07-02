@@ -20,6 +20,19 @@
 #include <bsp.h>
 #include <rtems.h>
 
+/**
+  *
+  */
+#ifndef CONFIGURE_GPIO_MAXIMUM_CONTROLLERS
+
+#ifndef BSP_GPIO_NUM_CONTROLLERS
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 1
+#else
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS BSP_GPIO_NUM_CONTROLLERS
+#endif /* BSP_GPIO_NUM_CONTROLLERS */
+
+#endif /* CONFIGURE_GPIO_MAXIMUM_CONTROLLERS */
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -36,12 +49,12 @@ extern "C" {
 typedef enum {
     RTEMS_GPIO_PIN_RESET = 0,
     RTEMS_GPIO_PIN_SET = 1
-} rtems_gpio_pin_state_t;
+} rtems_gpio_pin_state;
 
 /**
   * @brief GPIO pin modes. If a BSP has its other specific modes, 
   *        use RTEMS_GPIO_PINMODE_BSP_SPECIFIC and specify more 
-  *        configuration details in the rtems_gpio_config_t.
+  *        configuration details in the rtems_gpio_config.
   */
 typedef enum {
     RTEMS_GPIO_PINMODE_OUTPUT = 0,
@@ -50,7 +63,7 @@ typedef enum {
     RTEMS_GPIO_PINMODE_INPUT = 2,
     RTEMS_GPIO_PINMODE_ANALOG = 3,
     RTEMS_GPIO_PINMODE_BSP_SPECIFIC = 4
-} rtems_gpio_pin_mode_t;
+} rtems_gpio_pin_mode;
 
 /**
   * @brief GPIO pull resistor configuration. Defines pull-up or 
@@ -60,7 +73,7 @@ typedef enum {
     RTEMS_GPIO_NOPULL,
     RTEMS_GPIO_PULLUP,
     RTEMS_GPIO_PULLDOWN
-} rtems_gpio_pull_t;
+} rtems_gpio_pull;
 
 /**
   * @brief Interrupt modes enumeration
@@ -72,37 +85,37 @@ typedef enum {
     RTEMS_GPIO_INT_TRIG_BOTH_EDGES,
     RTEMS_GPIO_INT_TRIG_LOW,
     RTEMS_GPIO_INT_TRIG_HIGH
-} rtems_gpio_interrupt_trig_t;
+} rtems_gpio_interrupt_trig;
 
-typedef struct rtems_gpio_handlers rtems_gpio_handlers_t;
-typedef struct rtems_gpio rtems_gpio_t;
-typedef void (*rtems_gpio_isr_t)(void *);
+typedef struct rtems_gpio_handlers rtems_gpio_handlers;
+typedef struct rtems_gpio rtems_gpio;
+typedef void (*rtems_gpio_isr)(void *);
 
 /**
   * @brief Structure holding a set of GPIO handlers.
   */
 struct rtems_gpio_handlers {
-    rtems_status_code (*init)(rtems_gpio_t *);
+    rtems_status_code (*init)(rtems_gpio *);
 
-    rtems_status_code (*deinit)(rtems_gpio_t *);
+    rtems_status_code (*deinit)(rtems_gpio *);
 
-    rtems_status_code (*set_pin_mode)(rtems_gpio_t *, rtems_gpio_pin_mode_t);
+    rtems_status_code (*set_pin_mode)(rtems_gpio *, rtems_gpio_pin_mode);
 
-    rtems_status_code (*set_pull)(rtems_gpio_t *, rtems_gpio_pull_t);
+    rtems_status_code (*set_pull)(rtems_gpio *, rtems_gpio_pull);
 
-    rtems_status_code (*configure_interrupt)(rtems_gpio_t *, rtems_gpio_isr_t, void *, rtems_gpio_interrupt_trig_t, rtems_gpio_pull_t);
+    rtems_status_code (*configure_interrupt)(rtems_gpio *, rtems_gpio_isr, void *, rtems_gpio_interrupt_trig, rtems_gpio_pull);
 
-    rtems_status_code (*remove_interrupt)(rtems_gpio_t *);
+    rtems_status_code (*remove_interrupt)(rtems_gpio *);
 
-    rtems_status_code (*enable_interrupt)(rtems_gpio_t *);
+    rtems_status_code (*enable_interrupt)(rtems_gpio *);
 
-    rtems_status_code (*disable_interrupt)(rtems_gpio_t *);
+    rtems_status_code (*disable_interrupt)(rtems_gpio *);
 
-    rtems_status_code (*read)(rtems_gpio_t *, rtems_gpio_pin_state_t *);
+    rtems_status_code (*read)(rtems_gpio *, rtems_gpio_pin_state *);
 
-    rtems_status_code (*write)(rtems_gpio_t *, rtems_gpio_pin_state_t);
+    rtems_status_code (*write)(rtems_gpio *, rtems_gpio_pin_state);
 
-    rtems_status_code (*toggle)(rtems_gpio_t *);
+    rtems_status_code (*toggle)(rtems_gpio *);
 
 };
 
@@ -112,7 +125,7 @@ struct rtems_gpio_handlers {
   * 
   */
 struct rtems_gpio {
-    const rtems_gpio_handlers_t *handlers;
+    const rtems_gpio_handlers *handlers;
     uint32_t virtual_pin;
 };
 
@@ -171,7 +184,7 @@ extern rtems_status_code bsp_gpio_register_controllers(
   */
 extern rtems_status_code rtems_gpio_get(
     uint32_t virt_pin,
-    rtems_gpio_t **out
+    rtems_gpio **out
 );
 
 /**
@@ -186,7 +199,7 @@ extern rtems_status_code rtems_gpio_get(
   * @retval RTEMS_UNSATISFIED
   */
 extern rtems_status_code rtems_gpio_destroy(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 /**
@@ -205,8 +218,8 @@ extern rtems_status_code rtems_gpio_destroy(
   * @retval RTEMS_UNSATISFIED Controller cannot be registered
   */
 extern rtems_status_code rtems_gpio_register(
-    rtems_status_code (*get_gpio)(uint32_t, rtems_gpio_t **),
-    rtems_status_code (*destroy_gpio)(rtems_gpio_t *),
+    rtems_status_code (*get_gpio)(uint32_t, rtems_gpio **),
+    rtems_status_code (*destroy_gpio)(rtems_gpio *),
     uint32_t pin_count
 );
 
@@ -224,11 +237,11 @@ extern void rtems_gpio_begin(
 
 
 extern rtems_status_code rtems_gpio_init(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 extern rtems_status_code rtems_gpio_deinit(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 /**
@@ -242,8 +255,8 @@ extern rtems_status_code rtems_gpio_deinit(
   * @retval RTEMS_UNSATISFIED Could not configure GPIO object.
   */
 extern rtems_status_code rtems_gpio_set_pin_mode(
-    rtems_gpio_t *base, 
-    rtems_gpio_pin_mode_t mode
+    rtems_gpio *base, 
+    rtems_gpio_pin_mode mode
 );
 
 /**
@@ -251,14 +264,14 @@ extern rtems_status_code rtems_gpio_set_pin_mode(
   *        To be implemented by BSP.
   *
   * @param[in] base The GPIO object to be configured.
-  * @param mode The pull mode from the enumeration rtems_gpio_pull_t
+  * @param mode The pull mode from the enumeration rtems_gpio_pull
   *
   * @retval RTEMS_SUCCESSFUL GPIO configured successfully.
   * @retval RTEMS_UNSATISFIED Could not configure GPIO object.
   */
 extern rtems_status_code rtems_gpio_set_pull(
-    rtems_gpio_t *base, 
-    rtems_gpio_pull_t pull
+    rtems_gpio *base, 
+    rtems_gpio_pull pull
 );
 
 /**
@@ -272,23 +285,23 @@ extern rtems_status_code rtems_gpio_set_pull(
   * @retval RTEMS_UNSATISFIED Could not configure GPIO object.
   */
 extern rtems_status_code rtems_gpio_configure_interrupt(
-    rtems_gpio_t *base, 
-    rtems_gpio_isr_t isr,
+    rtems_gpio *base, 
+    rtems_gpio_isr isr,
     void *arg,
-    rtems_gpio_interrupt_trig_t trig,
-    rtems_gpio_pull_t pull
+    rtems_gpio_interrupt_trig trig,
+    rtems_gpio_pull pull
 );
 
 extern rtems_status_code rtems_gpio_remove_interrupt(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 extern rtems_status_code rtems_gpio_enable_interrupt(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 extern rtems_status_code rtems_gpio_disable_interrupt(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 /**
@@ -305,8 +318,8 @@ extern rtems_status_code rtems_gpio_disable_interrupt(
   * @retval * @see rtems_gpio_write_pin_ex().
   */
 extern rtems_status_code rtems_gpio_write(
-    rtems_gpio_t *base, 
-    rtems_gpio_pin_state_t value
+    rtems_gpio *base, 
+    rtems_gpio_pin_state value
 );
 
 /**
@@ -325,8 +338,8 @@ extern rtems_status_code rtems_gpio_write(
   * @retval * @see rtems_gpio_read_pin_ex().
   */
 extern rtems_status_code rtems_gpio_read(
-    rtems_gpio_t *base, 
-    rtems_gpio_pin_state_t *value
+    rtems_gpio *base, 
+    rtems_gpio_pin_state *value
 );
 
 /**
@@ -343,7 +356,7 @@ extern rtems_status_code rtems_gpio_read(
   * @retval * @see rtems_gpio_toggle_pin_ex().
   */
 extern rtems_status_code rtems_gpio_toggle(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 /** @} */

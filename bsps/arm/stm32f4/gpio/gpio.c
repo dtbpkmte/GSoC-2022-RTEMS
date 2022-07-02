@@ -14,79 +14,75 @@
 #include <stdlib.h>
 
 /*********** Helpers *****************/
-static stm32f4_gpio_t *get_gpio_from_base(
-    rtems_gpio_t *base
+static stm32f4_gpio *get_gpio_from_base(
+    rtems_gpio *base
 );
 
-/**
-  * Static functions prototypes. 
-  * Implementing GPIO API.
-  */
 static rtems_status_code stm32f4_gpio_get(
     uint32_t interm_pin,
-    rtems_gpio_t **out
+    rtems_gpio **out
 );
 
 static rtems_status_code stm32f4_gpio_destroy(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 static rtems_status_code stm32f4_gpio_init(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 static rtems_status_code stm32f4_gpio_deinit(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 static rtems_status_code stm32f4_gpio_set_pin_mode(
-    rtems_gpio_t *base,
-    rtems_gpio_pin_mode_t mode
+    rtems_gpio *base,
+    rtems_gpio_pin_mode mode
 );
 
 static rtems_status_code stm32f4_gpio_set_pull(
-    rtems_gpio_t *base,
-    rtems_gpio_pull_t pull
+    rtems_gpio *base,
+    rtems_gpio_pull pull
 );
 
 static rtems_status_code stm32f4_gpio_configure_interrupt(
-    rtems_gpio_t *base, 
-    rtems_gpio_isr_t isr,
+    rtems_gpio *base, 
+    rtems_gpio_isr isr,
     void *arg,
-    rtems_gpio_interrupt_trig_t trig,
-    rtems_gpio_pull_t pull
+    rtems_gpio_interrupt_trig trig,
+    rtems_gpio_pull pull
 );
 
 static rtems_status_code stm32f4_gpio_remove_interrupt(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 static rtems_status_code stm32f4_gpio_enable_interrupt(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 static rtems_status_code stm32f4_gpio_disable_interrupt(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 static rtems_status_code stm32f4_gpio_read(
-    rtems_gpio_t *base,
-    rtems_gpio_pin_state_t *value
+    rtems_gpio *base,
+    rtems_gpio_pin_state *value
 );
 
 static rtems_status_code stm32f4_gpio_write(
-    rtems_gpio_t *base,
-    rtems_gpio_pin_state_t value
+    rtems_gpio *base,
+    rtems_gpio_pin_state value
 );
 
 static rtems_status_code stm32f4_gpio_toggle(
-    rtems_gpio_t *base
+    rtems_gpio *base
 );
 
 /**
   * @brief STM32F4 GPIO handlers
   */
-static const rtems_gpio_handlers_t stm32f4_gpio_handlers = {
+static const rtems_gpio_handlers stm32f4_gpio_handlers = {
     .init = stm32f4_gpio_init,
     .deinit = stm32f4_gpio_deinit,
     .set_pin_mode = stm32f4_gpio_set_pin_mode,
@@ -146,38 +142,23 @@ static uint32_t LL_EXTI_LINE_x[] = {
     LL_EXTI_LINE_15
 };
 
-/**
-  * Additional EXTI defines for convenience
-  */
-#define EXTI5_IRQn      EXTI9_5_IRQn
-#define EXTI6_IRQn      EXTI9_5_IRQn
-#define EXTI7_IRQn      EXTI9_5_IRQn
-#define EXTI8_IRQn      EXTI9_5_IRQn
-#define EXTI9_IRQn      EXTI9_5_IRQn
-#define EXTI10_IRQn     EXTI15_10_IRQn
-#define EXTI11_IRQn     EXTI15_10_IRQn
-#define EXTI12_IRQn     EXTI15_10_IRQn
-#define EXTI13_IRQn     EXTI15_10_IRQn
-#define EXTI14_IRQn     EXTI15_10_IRQn
-#define EXTI15_IRQn     EXTI15_10_IRQn
-
 static unsigned int EXTIx_IRQn[] = {
     EXTI0_IRQn,
     EXTI1_IRQn,
     EXTI2_IRQn,
     EXTI3_IRQn,
     EXTI4_IRQn,
-    EXTI5_IRQn,
-    EXTI6_IRQn,
-    EXTI7_IRQn,
-    EXTI8_IRQn,
-    EXTI9_IRQn,
-    EXTI10_IRQn,
-    EXTI11_IRQn,
-    EXTI12_IRQn,
-    EXTI13_IRQn,
-    EXTI14_IRQn,
-    EXTI15_IRQn
+    EXTI9_5_IRQn,
+    EXTI9_5_IRQn,
+    EXTI9_5_IRQn,
+    EXTI9_5_IRQn,
+    EXTI9_5_IRQn,
+    EXTI15_10_IRQn,
+    EXTI15_10_IRQn,
+    EXTI15_10_IRQn,
+    EXTI15_10_IRQn,
+    EXTI15_10_IRQn,
+    EXTI15_10_IRQn
 };
 
 /**
@@ -225,25 +206,25 @@ static unsigned int EXTIx_IRQn[] = {
 /************** Interrupt manager *****************/
 typedef struct {
     void *arg;
-    stm32f4_gpio_t *gpio;
-} stm32f4_interrupt_arg_t;
+    stm32f4_gpio *gpio;
+} stm32f4_interrupt_arg;
 
 typedef struct {
-    stm32f4_interrupt_arg_t arg;
-    rtems_gpio_isr_t isr;
-} stm32f4_interrupt_t;
+    stm32f4_interrupt_arg arg;
+    rtems_gpio_isr isr;
+} stm32f4_interrupt;
 
-static stm32f4_interrupt_t isr_table[15]; 
+static stm32f4_interrupt isr_table[15]; 
 
 void exti_handler(void *arg);
 
 /************* Helpers implementation ********************/
 
-static stm32f4_gpio_t *get_gpio_from_base(
-    rtems_gpio_t *base
+static stm32f4_gpio *get_gpio_from_base(
+    rtems_gpio *base
 ) 
 {
-    return RTEMS_CONTAINER_OF(base, stm32f4_gpio_t, base);
+    return RTEMS_CONTAINER_OF(base, stm32f4_gpio, base);
 }
 
 /********** STM32F4 GPIO API functions ************/
@@ -259,34 +240,34 @@ rtems_status_code bsp_gpio_register_controllers(
     );
 }
 
-static rtems_status_code stm32f4_gpio_get(
+rtems_status_code stm32f4_gpio_get(
     uint32_t interm_pin,
-    rtems_gpio_t **out
+    rtems_gpio **out
 )
 {
-    stm32f4_gpio_t *tmp = (stm32f4_gpio_t *) malloc(sizeof(stm32f4_gpio_t));
+    stm32f4_gpio *tmp = malloc(sizeof(stm32f4_gpio));
     if (tmp == NULL) {
         return RTEMS_NO_MEMORY;
     }
-    tmp->base = (rtems_gpio_t) { .handlers = &stm32f4_gpio_handlers };
+    tmp->base = (rtems_gpio) { .handlers = &stm32f4_gpio_handlers };
     tmp->pin = STM32F4_GET_PIN_0_15(interm_pin);
     tmp->port = STM32F4_GET_PORT(interm_pin);
     
-    *out = (rtems_gpio_t *) tmp;
+    *out = (rtems_gpio *) tmp;
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_destroy(
-    rtems_gpio_t *base
+rtems_status_code stm32f4_gpio_destroy(
+    rtems_gpio *base
 )
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     free(gpio);
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_init(rtems_gpio_t *base) {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+rtems_status_code stm32f4_gpio_init(rtems_gpio *base) {
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     
     switch ((uintptr_t) gpio->port) {
         case (uintptr_t) GPIOA:
@@ -330,8 +311,8 @@ static rtems_status_code stm32f4_gpio_init(rtems_gpio_t *base) {
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_deinit(rtems_gpio_t *base) {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+rtems_status_code stm32f4_gpio_deinit(rtems_gpio *base) {
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     
     switch ((uintptr_t) gpio->port) {
         case (uintptr_t) GPIOA:
@@ -380,12 +361,12 @@ static rtems_status_code stm32f4_gpio_deinit(rtems_gpio_t *base) {
   * @note If using interrupt mode, use rtems_gpio_configure_interrupt().
   * @note If using alternate mode, use rtems_gpio_configure().
   */
-static rtems_status_code stm32f4_gpio_set_pin_mode(
-    rtems_gpio_t *base, 
-    rtems_gpio_pin_mode_t mode
+rtems_status_code stm32f4_gpio_set_pin_mode(
+    rtems_gpio *base, 
+    rtems_gpio_pin_mode mode
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(gpio->pin);
 
     uint32_t stm32f4_mode, stm32f4_output_type;
@@ -422,12 +403,12 @@ static rtems_status_code stm32f4_gpio_set_pin_mode(
 /**
   * @note Warning: only one pin can be passed as argument
   */
-static rtems_status_code stm32f4_gpio_set_pull(
-    rtems_gpio_t *base, 
-    rtems_gpio_pull_t pull
+rtems_status_code stm32f4_gpio_set_pull(
+    rtems_gpio *base, 
+    rtems_gpio_pull pull
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(gpio->pin);
     uint32_t stm32f4_pull;
 
@@ -455,16 +436,16 @@ static rtems_status_code stm32f4_gpio_set_pull(
   * @note This function defaults to not using pull resistor.
   *       Use rtems_gpio_set_pull() afterwards to change.
   */
-static rtems_status_code stm32f4_gpio_configure_interrupt(
-    rtems_gpio_t *base, 
-    rtems_gpio_isr_t isr,
+rtems_status_code stm32f4_gpio_configure_interrupt(
+    rtems_gpio *base, 
+    rtems_gpio_isr isr,
     void *arg,
-    rtems_gpio_interrupt_trig_t trig,
-    rtems_gpio_pull_t pull
+    rtems_gpio_interrupt_trig trig,
+    rtems_gpio_pull pull
 ) 
 {
     // configure pin
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(gpio->pin);
     GPIO_InitTypeDef hal_conf;
 
@@ -502,7 +483,7 @@ static rtems_status_code stm32f4_gpio_configure_interrupt(
     HAL_GPIO_Init(gpio->port, &hal_conf);
 
     // RTEMS interrupt config
-    isr_table[gpio->pin] = (stm32f4_interrupt_t){
+    isr_table[gpio->pin] = (stm32f4_interrupt){
         .arg = {
             .arg = arg,
             .gpio = gpio
@@ -523,68 +504,68 @@ static rtems_status_code stm32f4_gpio_configure_interrupt(
     return sc;
 }
 
-static rtems_status_code stm32f4_gpio_remove_interrupt(
-    rtems_gpio_t *base
+rtems_status_code stm32f4_gpio_remove_interrupt(
+    rtems_gpio *base
 )
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     rtems_status_code sc = rtems_interrupt_handler_remove(
             STM32F4_GET_EXTI_IRQn(gpio->pin), 
             exti_handler, 
             &isr_table[gpio->pin].arg);
     if (sc == RTEMS_SUCCESSFUL) {
-        isr_table[gpio->pin] = (stm32f4_interrupt_t){0};
+        isr_table[gpio->pin] = (stm32f4_interrupt){0};
     }
     return sc;
 }
 
-static rtems_status_code stm32f4_gpio_enable_interrupt(
-    rtems_gpio_t *base
+rtems_status_code stm32f4_gpio_enable_interrupt(
+    rtems_gpio *base
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     LL_EXTI_EnableIT_0_31(STM32F4_GET_LL_EXTI_LINE(gpio->pin));
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_disable_interrupt(
-    rtems_gpio_t *base
+rtems_status_code stm32f4_gpio_disable_interrupt(
+    rtems_gpio *base
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     LL_EXTI_DisableIT_0_31(STM32F4_GET_LL_EXTI_LINE(gpio->pin));
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_write(
-    rtems_gpio_t *base, 
-    rtems_gpio_pin_state_t value
+rtems_status_code stm32f4_gpio_write(
+    rtems_gpio *base, 
+    rtems_gpio_pin_state value
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(gpio->pin);
 
     HAL_GPIO_WritePin(gpio->port, pin_mask, value);
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_read(
-    rtems_gpio_t *base, 
-    rtems_gpio_pin_state_t *value
+rtems_status_code stm32f4_gpio_read(
+    rtems_gpio *base, 
+    rtems_gpio_pin_state *value
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(gpio->pin);
 
     *value = HAL_GPIO_ReadPin(gpio->port, pin_mask);
     return RTEMS_SUCCESSFUL;
 }
 
-static rtems_status_code stm32f4_gpio_toggle(
-    rtems_gpio_t *base
+rtems_status_code stm32f4_gpio_toggle(
+    rtems_gpio *base
 ) 
 {
-    stm32f4_gpio_t *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
     uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(gpio->pin);
 
     HAL_GPIO_TogglePin(gpio->port, pin_mask);
@@ -592,7 +573,7 @@ static rtems_status_code stm32f4_gpio_toggle(
 }
 
 void exti_handler(void *arg) {
-    stm32f4_interrupt_arg_t *stm32_arg = (stm32f4_interrupt_arg_t *) arg;
+    stm32f4_interrupt_arg *stm32_arg = (stm32f4_interrupt_arg *) arg;
     if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->gpio->pin) != RESET)
     {
         __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->gpio->pin);
