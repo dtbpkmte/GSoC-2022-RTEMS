@@ -214,7 +214,7 @@ typedef struct {
     rtems_gpio_isr isr;
 } stm32f4_interrupt;
 
-static stm32f4_interrupt isr_table[15]; 
+static stm32f4_interrupt isr_table[16]; 
 
 void exti_handler(void *arg);
 
@@ -236,7 +236,7 @@ rtems_status_code bsp_gpio_register_controllers(
     return rtems_gpio_register(
             stm32f4_gpio_get,
             stm32f4_gpio_destroy,
-            144
+            sizeof(GPIOx)/sizeof(GPIOx[0])*16
     );
 }
 
@@ -574,9 +574,10 @@ rtems_status_code stm32f4_gpio_toggle(
 
 void exti_handler(void *arg) {
     stm32f4_interrupt_arg *stm32_arg = (stm32f4_interrupt_arg *) arg;
-    if(__HAL_GPIO_EXTI_GET_IT(stm32_arg->gpio->pin) != RESET)
+    uint32_t pin_mask = STM32F4_GET_HAL_GPIO_PIN(stm32_arg->gpio->pin);
+    if(__HAL_GPIO_EXTI_GET_IT(pin_mask) != RESET)
     {
-        __HAL_GPIO_EXTI_CLEAR_IT(stm32_arg->gpio->pin);
+        __HAL_GPIO_EXTI_CLEAR_IT(pin_mask);
         (*isr_table[stm32_arg->gpio->pin].isr)(stm32_arg->arg);
     }
 }

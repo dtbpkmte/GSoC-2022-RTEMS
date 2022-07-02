@@ -21,8 +21,25 @@
   * An array to store all registered GPIO controllers.
   */
 static rtems_status_code (*get_gpio_table[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS])(uint32_t, rtems_gpio **);
+
+/**
+  * An array to store all registered GPIO controllers.
+  */
 static rtems_status_code (*destroy_gpio_table[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS])(rtems_gpio *);
+
+/**
+  * An array to store the boundaries of pin index of controllers.
+  * Example with 2 16-pin controllers and 1 32-pin controller,
+  * the pin_map will be:
+  * { 0, 16, 32, 64}
+  * Value 0 is always at index 0 for convenience of calculation.
+  * The length of this array is always 1+(number of controllers).
+  */
 static uint32_t pin_map[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS+1] = {0};
+
+/**
+  * The number of controllers registered.
+  */
 static uint32_t num_ctrl = 0;
 
 void rtems_gpio_begin(
