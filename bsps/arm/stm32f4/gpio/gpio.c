@@ -8,6 +8,14 @@
   * @note RTEMS_GPIO_PINMODE_BSP_SPECIFIC is Alternate mode for STM32F4 BSP
   */
 
+/*
+ *  Copyright (c) 2022 Duc Doan <dtbpkmte at gmail.com>
+ *
+ *  The license and distribution terms for this file may be
+ *  found in the file LICENSE in this distribution or at
+ *  http://www.rtems.org/license/LICENSE.
+ */
+
 #include <bsp.h>
 #include <rtems.h>
 #include <bsp/stm32f4_gpio.h>
@@ -18,6 +26,7 @@ static stm32f4_gpio *get_gpio_from_base(
     rtems_gpio *base
 );
 
+/*********** GPIO API ***************/
 static rtems_status_code stm32f4_gpio_get(
     uint32_t interm_pin,
     rtems_gpio **out
@@ -78,6 +87,8 @@ static rtems_status_code stm32f4_gpio_write(
 static rtems_status_code stm32f4_gpio_toggle(
     rtems_gpio *base
 );
+
+/*********************************************************/
 
 /**
   * @brief STM32F4 GPIO handlers

@@ -20,9 +20,18 @@
   *
   */
 typedef struct {
-    rtems_gpio base;          /** Base rtems_gpio_t obj  **/
-    uint32_t pin;               /** Pin index from 0 to 15 **/
-    GPIO_TypeDef *port;         /** HAL GPIOx pointer      **/
+    /**
+      * @brief This member is a rtems_gpio object.
+      */
+    rtems_gpio base;
+    /**
+      *@brief This member is the pin number from 0 to 15.
+      */
+    uint32_t pin;
+    /**
+      * @brief This member is HAL GPIOx pointer.
+      */
+    GPIO_TypeDef *port;
 } stm32f4_gpio;
 
 #endif /* LIBBSP_ARM_STM32F4_BSP_GPIO */
