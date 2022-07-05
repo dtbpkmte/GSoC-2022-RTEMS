@@ -20,4 +20,12 @@ void BSP_START_TEXT_SECTION bsp_start_hook_1(void)
   bsp_start_clear_bss();
 
   /* At this point we can use objects outside the .start section */
+  
+#ifdef __rtems__
+
+#if STM32F4_ENABLE_GENERIC_GPIO == 1
+  bsp_gpio_register_controllers();
+#endif /* STM32F4_ENABLE_GENERIC_GPIO */
+
+#endif /* __rtems__ */
 }

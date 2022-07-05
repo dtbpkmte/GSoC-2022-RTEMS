@@ -19,6 +19,7 @@
 #endif /* __rtems__ */
 #ifdef __rtems__
 #include <stm32f4xx.h>
+#include <bsp/gpio2.h>
 #endif /* __rtems__ */
 
 #ifdef STM32F4_FAMILY_F4XXXX
@@ -46,7 +47,7 @@ uint32_t HAL_GetTick(void)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
+static void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
@@ -166,7 +167,6 @@ static rtems_status_code SystemClock_Config(void)
     HAL_StatusTypeDef status = HAL_RCC_OscConfig(&RCC_OscInitStruct);
     if (status != HAL_OK)
     {
-//            Error_Handler();
         return RTEMS_UNSATISFIED;
     }
 
@@ -181,7 +181,6 @@ static rtems_status_code SystemClock_Config(void)
 
     if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, flash_latency) != HAL_OK)
     {
-//        Error_Handler();
         return RTEMS_UNSATISFIED;
     }
 
@@ -465,7 +464,7 @@ void bsp_start( void )
 {
     init_main_osc();
 
-#ifdef __rtems__
+#ifndef __rtems__
     stm32f4_gpio_set_config_array( &stm32f4_start_config_gpio[ 0 ] );
 #endif /* __rtems__ */
 

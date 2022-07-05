@@ -261,6 +261,7 @@ source:
 - bsps/arm/stm32f4/hal/stm32f4xx_ll_usb.c
 - bsps/arm/stm32f4/hal/stm32f4xx_ll_utils.c
 - bsps/arm/stm32f4/hal/system_stm32f4xx.c
+- bsps/arm/stm32f4/gpio/gpio.c
 - bsps/arm/shared/irq/irq-armv7m.c
 - bsps/arm/shared/irq/irq-dispatch-armv7m.c
 - bsps/arm/shared/start/bsp-start-memcpy.S
