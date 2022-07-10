@@ -53,4 +53,24 @@ typedef struct {
     GPIO_TypeDef *port;
 } stm32f4_gpio;
 
+/**
+  * @brief Lock configuration of a pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  */
+extern void stm32f4_gpio_lock_pin(
+    rtems_gpio *base
+);
+
+/**
+  * @brief Sets the alternate function for a pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  * @param alternate Alternate function, from 0-15.
+  */
+extern void stm32f4_gpio_set_af(
+    rtems_gpio *base,
+    uint32_t alternate
+);
+
 #endif /* LIBBSP_ARM_STM32F4_BSP_GPIO */
