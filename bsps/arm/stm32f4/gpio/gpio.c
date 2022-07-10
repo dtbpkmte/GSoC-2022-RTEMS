@@ -562,3 +562,35 @@ void exti_handler(void *arg) {
     }
 }
 
+/************ STM32F4 Other specific GPIO functions ************/
+void stm32f4_gpio_lock_pin(
+    rtems_gpio *base
+)
+{
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
+    LL_GPIO_LockPin(
+            gpio->port,
+            STM32F4_GET_HAL_GPIO_PIN(gpio->pin)
+    );
+}
+
+void stm32f4_gpio_set_af(
+    rtems_gpio *base,
+    uint32_t alternate
+)
+{
+    stm32f4_gpio *gpio = get_gpio_from_base(base);
+    if (gpio->pin < 8)
+        LL_GPIO_SetAFPin_0_7(
+                gpio->port,
+                STM32F4_GET_HAL_GPIO_PIN(gpio->pin),
+                alternate
+        );
+    else
+        LL_GPIO_SetAFPin_8_15(
+                gpio->port,
+                STM32F4_GET_HAL_GPIO_PIN(gpio->pin),
+                alternate
+        );
+}
+
