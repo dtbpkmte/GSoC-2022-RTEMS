@@ -52,15 +52,37 @@ typedef enum {
     RTEMS_ADC_NB_DMA
 } rtems_adc_nb_mode;
 
-typedef void (*rtems_adc_tf) (void *params, int32_t raw_value);
+#define RTEMS_ADC_NO_TIMEOUT   0xFFFFFFFFU
+
+typedef void (*rtems_adc_isr)(void *);
+typedef void (*rtems_adc_tf) (void *params, uint32_t raw_value);
+
+typedef struct {
+    rtems_status_code (*read_raw) (rtems_gpio *, uint32_t *, uint32_t);
+    rtems_status_code (*read_raw_nb) (rtems_gpio *, uint32_t *);
+    rtems_status_code (*set_resolution) (rtems_gpio *, unsigned int);
+    rtems_status_code (*set_alignment) (rtems_gpio *, rtems_adc_align);
+    rtems_status_code (*configure_interrupt) (rtems_gpio *, rtems_adc_isr, void *);
+    rtems_status_code (*remove_interrupt) (rtems_gpio *);
+    rtems_status_code (*enable_interrupt) (rtems_gpio *);
+    rtems_status_code (*disable_interrupt) (rtems_gpio *);
+} rtems_adc_handlers;
 
 extern rtems_status_code rtems_adc_read_raw(
     rtems_gpio *base, 
-    int32_t result
+    uint32_t *result
+);
+extern rtems_status_code rtems_adc_read_timeout(
+    rtems_gpio *base, 
+    int32_t *result,
+    uint32_t timeout
 );
 extern rtems_status_code rtems_adc_read_raw_nb(
     rtems_gpio *base, 
-    int32_t result
+    uint32_t *result
+);
+extern rtems_adc_status rtems_adc_is_ready(
+    rtems_gpio *base
 );
 
 extern rtems_status_code rtems_adc_register_tf(
@@ -75,12 +97,14 @@ extern rtems_status_code rtems_adc_read(
     rtems_gpio *base, 
     double *result
 );
+extern rtems_status_code rtems_adc_read_timeout(
+    rtems_gpio *base, 
+    double *result,
+    uint32_t timeout
+);
 extern rtems_status_code rtems_adc_read_nb(
     rtems_gpio *base, 
     double *result
-);
-extern rtems_adc_status rtems_adc_is_ready(
-    rtems_gpio *base
 );
 
 extern rtems_status_code rtems_adc_set_resolution(
@@ -93,6 +117,11 @@ extern rtems_status_code rtems_adc_set_alignment(
 );
 
 extern rtems_status_code rtems_adc_configure_interrupt(
+    rtems_gpio *base,
+    rtems_adc_isr isr,
+    void *arg
+);
+extern rtems_status_code rtems_adc_remove_interrupt(
     rtems_gpio *base
 );
 extern rtems_status_code rtems_adc_enable_interrupt(
