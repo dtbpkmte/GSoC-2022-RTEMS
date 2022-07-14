@@ -30,6 +30,7 @@
 
 #include <bsp.h>
 #include <rtems.h>
+#include <bsp/adc.h>
 
 /**
   * Configure the maximum number of GPIO controllers used in
@@ -215,7 +216,13 @@ struct rtems_gpio {
       * @brief This member is a pointer to a structure containing
       *        pointers to handlers of a GPIO controller.
       */
-    const rtems_gpio_handlers *handlers;
+    const rtems_gpio_handlers *gpio_handlers;
+    /**
+      * @brief This member is a pointer to a structure containing
+      *        pointers to handlers of an ADC.
+      */
+    const rtems_adc_handlers *adc_handlers;
+
     /**
       * @brief This member is a virtual pin number, counting from
       *        0 (zero).
