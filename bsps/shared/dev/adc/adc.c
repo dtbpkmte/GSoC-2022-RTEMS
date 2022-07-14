@@ -26,17 +26,30 @@
  */
 
 #include <bsp/adc.h>
+#include <stdbool.h>
+
+static bool is_adc_pin(
+    rtems_gpio *base
+);
 
 rtems_status_code rtems_adc_read_raw(
     rtems_gpio *base,
-    int32_t result
+    int32_t *result
+)
+{
+    return RTEMS_NOT_IMPLEMENTED;
+}
+rtems_status_code rtems_adc_read_timeout(
+    rtems_gpio *base,
+    int32_t *result,
+    uint32_t timeout
 )
 {
     return RTEMS_NOT_IMPLEMENTED;
 }
 rtems_status_code rtems_adc_read_raw_nb(
     rtems_gpio *base,
-    int32_t result
+    int32_t *result
 )
 {
     return RTEMS_NOT_IMPLEMENTED;
@@ -59,6 +72,14 @@ rtems_status_code rtems_adc_remove_tf(
 rtems_status_code rtems_adc_read(
     rtems_gpio *base,
     double *result
+)
+{
+    return RTEMS_NOT_IMPLEMENTED;
+}
+rtems_status_code rtems_adc_read_timeout(
+    rtems_gpio *base,
+    double *result,
+    uint32_t timeout
 )
 {
     return RTEMS_NOT_IMPLEMENTED;
@@ -110,3 +131,9 @@ rtems_status_code rtems_adc_disable_interrupt(
 {
     return RTEMS_NOT_IMPLEMENTED;
 }
+
+static bool is_analog_pin(
+    rtems_gpio *base
+)
+{
+    return base->
