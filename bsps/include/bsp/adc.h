@@ -30,7 +30,6 @@
 
 #include <bsp.h>
 #include <rtems.h>
-#include <bsp/gpio2.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,23 +55,27 @@ typedef enum {
 
 typedef void (*rtems_adc_isr)(void *);
 typedef void (*rtems_adc_tf) (void *params, uint32_t raw_value);
+typedef struct rtems_adc_handlers rtems_adc_handlers;
 
-typedef struct {
+#include <bsp/gpio2.h>
+
+struct rtems_adc_handlers {
     rtems_status_code (*read_raw) (rtems_gpio *, uint32_t *, uint32_t);
     rtems_status_code (*read_raw_nb) (rtems_gpio *, uint32_t *);
+    rtems_adc_status (*is_ready) (rtems_gpio *);
     rtems_status_code (*set_resolution) (rtems_gpio *, unsigned int);
     rtems_status_code (*set_alignment) (rtems_gpio *, rtems_adc_align);
     rtems_status_code (*configure_interrupt) (rtems_gpio *, rtems_adc_isr, void *);
     rtems_status_code (*remove_interrupt) (rtems_gpio *);
     rtems_status_code (*enable_interrupt) (rtems_gpio *);
     rtems_status_code (*disable_interrupt) (rtems_gpio *);
-} rtems_adc_handlers;
+};
 
 extern rtems_status_code rtems_adc_read_raw(
     rtems_gpio *base, 
     uint32_t *result
 );
-extern rtems_status_code rtems_adc_read_timeout(
+extern rtems_status_code rtems_adc_read_raw_timeout(
     rtems_gpio *base, 
     int32_t *result,
     uint32_t timeout
