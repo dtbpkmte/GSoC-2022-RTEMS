@@ -117,14 +117,14 @@ rtems_status_code rtems_gpio_init(
     rtems_gpio *base
 )
 {
-    return base->handlers->init(base);
+    return base->gpio_handlers->init(base);
 }
 
 rtems_status_code rtems_gpio_deinit(
     rtems_gpio *base
 )
 {
-    return base->handlers->deinit(base);
+    return base->gpio_handlers->deinit(base);
 }
 
 rtems_status_code rtems_gpio_set_pin_mode(
@@ -132,7 +132,7 @@ rtems_status_code rtems_gpio_set_pin_mode(
     rtems_gpio_pin_mode mode
 ) 
 {
-    return base->handlers->set_pin_mode(base, mode);
+    return base->gpio_handlers->set_pin_mode(base, mode);
 }
 
 rtems_status_code rtems_gpio_set_pull(
@@ -140,7 +140,7 @@ rtems_status_code rtems_gpio_set_pull(
     rtems_gpio_pull pull
 ) 
 {
-    return base->handlers->set_pull(base, pull);
+    return base->gpio_handlers->set_pull(base, pull);
 }
 
 rtems_status_code rtems_gpio_configure_interrupt(
@@ -151,28 +151,28 @@ rtems_status_code rtems_gpio_configure_interrupt(
     rtems_gpio_pull pull
 ) 
 {
-    return base->handlers->configure_interrupt(base, isr, arg, trig, pull);
+    return base->gpio_handlers->configure_interrupt(base, isr, arg, trig, pull);
 }
 
 rtems_status_code rtems_gpio_remove_interrupt(
     rtems_gpio *base
 )
 {
-    return base->handlers->remove_interrupt(base);
+    return base->gpio_handlers->remove_interrupt(base);
 }
 
 rtems_status_code rtems_gpio_enable_interrupt(
     rtems_gpio *base
 )
 {
-    return base->handlers->enable_interrupt(base);
+    return base->gpio_handlers->enable_interrupt(base);
 }
 
 rtems_status_code rtems_gpio_disable_interrupt(
     rtems_gpio *base
 )
 {
-    return base->handlers->disable_interrupt(base);
+    return base->gpio_handlers->disable_interrupt(base);
 }
 
 rtems_status_code rtems_gpio_write(
@@ -180,7 +180,7 @@ rtems_status_code rtems_gpio_write(
     rtems_gpio_pin_state value
 ) 
 {
-    return base->handlers->write(base, value);
+    return base->gpio_handlers->write(base, value);
 }
 
 rtems_status_code rtems_gpio_read(
@@ -188,13 +188,13 @@ rtems_status_code rtems_gpio_read(
     rtems_gpio_pin_state *value
 ) 
 {
-    return base->handlers->read(base, value);
+    return base->gpio_handlers->read(base, value);
 }
 
 rtems_status_code rtems_gpio_toggle(
     rtems_gpio *base
 ) 
 {
-    return base->handlers->toggle(base);
+    return base->gpio_handlers->toggle(base);
 }
 

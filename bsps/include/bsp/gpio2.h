@@ -30,7 +30,6 @@
 
 #include <bsp.h>
 #include <rtems.h>
-#include <bsp/adc.h>
 
 /**
   * Configure the maximum number of GPIO controllers used in
@@ -55,6 +54,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+
+#define RTEMS_GPIO_BUILD_BASE(gpioh, adch) \
+    (rtems_gpio) { .gpio_handlers = ( gpioh ), \
+                   .adc_handlers = ( adch ) };
 
 /**
   * @name GPIO data structures
@@ -110,6 +113,8 @@ typedef struct rtems_gpio rtems_gpio;
   * @brief Typedef of the function pointer of an ISR.
   */
 typedef void (*rtems_gpio_isr)(void *);
+
+#include <bsp/adc.h>
 
 /**
   * @brief Structure containing pointers to handlers of a
