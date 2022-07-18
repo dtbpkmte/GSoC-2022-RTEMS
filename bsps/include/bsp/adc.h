@@ -42,8 +42,8 @@ typedef enum {
 } rtems_adc_status;
 
 typedef enum {
-    RTEMS_ADC_LEFT_ALIGNED,
-    RTEMS_ADC_RIGHT_ALIGNED
+    RTEMS_ADC_ALIGN_LEFT,
+    RTEMS_ADC_ALIGN_RIGHT
 } rtems_adc_align;
 
 typedef enum {
