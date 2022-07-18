@@ -37,7 +37,7 @@ rtems_status_code rtems_adc_read_raw(
 }
 rtems_status_code rtems_adc_read_raw_timeout(
     rtems_gpio *base,
-    int32_t *result,
+    uint32_t *result,
     uint32_t timeout
 )
 {
@@ -132,4 +132,3 @@ rtems_status_code rtems_adc_disable_interrupt(
 {
     return base->adc_handlers->disable_interrupt(base);
 }
-
