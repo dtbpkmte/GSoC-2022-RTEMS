@@ -36,9 +36,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 typedef enum {
+    RTEMS_ADC_NOT_STARTED = 0,
     RTEMS_ADC_NOT_READY,
-    RTEMS_ADC_READY,
-    RTEMS_ADC_NOT_STARTED
+    RTEMS_ADC_READY
 } rtems_adc_status;
 
 typedef enum {
@@ -77,7 +77,7 @@ extern rtems_status_code rtems_adc_read_raw(
 );
 extern rtems_status_code rtems_adc_read_raw_timeout(
     rtems_gpio *base, 
-    int32_t *result,
+    uint32_t *result,
     uint32_t timeout
 );
 extern rtems_status_code rtems_adc_read_raw_nb(
@@ -98,15 +98,18 @@ extern rtems_status_code rtems_adc_remove_tf(
 );
 extern rtems_status_code rtems_adc_read(
     rtems_gpio *base, 
+    uint32_t tf_index,
     double *result
 );
 extern rtems_status_code rtems_adc_read_timeout(
     rtems_gpio *base, 
+    uint32_t tf_index,
     double *result,
     uint32_t timeout
 );
 extern rtems_status_code rtems_adc_read_nb(
     rtems_gpio *base, 
+    uint32_t tf_index,
     double *result
 );
 
