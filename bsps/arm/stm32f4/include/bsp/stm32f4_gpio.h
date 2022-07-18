@@ -51,7 +51,21 @@ typedef struct {
       * @brief This member is HAL GPIOx pointer.
       */
     GPIO_TypeDef *port;
+    ADC_TypeDef *ADCx;
 } stm32f4_gpio;
+
+/**
+  * @brief Macro to get stm32f4_gpio object from a base rtems_gpio
+  *        object.
+  *
+  * This is a wrapper of RTEMS_CONTAINER_OF macro
+  *
+  * @param base The pointer to a rtems_gpio object
+  * @retval The pointer to the stm32f4_gpio object owning
+  *         the specified rtems_gpio object
+  */
+#define stm32f4_get_gpio_from_base(base) \
+    RTEMS_CONTAINER_OF(base, stm32f4_gpio, base)
 
 /**
   * @brief Lock configuration of a pin.
