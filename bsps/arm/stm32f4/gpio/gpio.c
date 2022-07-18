@@ -27,8 +27,9 @@
 
 #include <bsp.h>
 #include <rtems.h>
-#include <bsp/stm32f4_gpio.h>
 #include <stdlib.h>
+#include <bsp/stm32f4_gpio.h>
+#include <bsp/stm32f4_adc.h>
 
 /*********** Helpers *****************/
 
@@ -224,7 +225,7 @@ rtems_status_code stm32f4_gpio_get(
     tmp->pin = STM32F4_GET_PIN_0_15(interm_pin);
     tmp->port = STM32F4_GET_PORT(interm_pin);
 
-    stm32f4_adc_handlers *adc_handlers = NULL;
+    rtems_adc_handlers *adc_handlers = NULL;
     if (stm32f4_is_adc_pin(tmp)) {
         tmp->ADCx = stm32f4_get_ADCx(tmp->port);
         adc_handlers = stm32f4_get_adc_handlers();
@@ -289,12 +290,14 @@ rtems_status_code stm32f4_gpio_init(rtems_gpio *base) {
             return RTEMS_UNSATISFIED;
     }
 
+#if (BSP_ENABLE_ADC == 1)
     // If the pin has ADC functionality, initialize it
     if (stm32f4_is_adc_pin(gpio)) {
         rtems_status_code code;
         if ((code=stm32f4_adc_init(gpio)) != RTEMS_SUCCESSFUL)
             return code;
     }
+#endif /* BSP_ENABLE_ADC */
 
     return RTEMS_SUCCESSFUL;
 }
