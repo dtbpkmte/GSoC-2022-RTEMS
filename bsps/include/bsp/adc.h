@@ -54,15 +54,15 @@ typedef enum {
 #define RTEMS_ADC_NO_TIMEOUT   0xFFFFFFFFU
 
 typedef void (*rtems_adc_isr)(void *);
-typedef void (*rtems_adc_tf) (void *params, uint32_t raw_value);
+typedef double (*rtems_adc_tf) (void *params, uint32_t raw_value);
 typedef struct rtems_adc_handlers rtems_adc_handlers;
 
 #include <bsp/gpio2.h>
 
 struct rtems_adc_handlers {
     rtems_status_code (*read_raw) (rtems_gpio *, uint32_t *, uint32_t);
+    rtems_status_code (*start_read_raw_nb) (rtems_gpio *);
     rtems_status_code (*read_raw_nb) (rtems_gpio *, uint32_t *);
-    rtems_adc_status (*is_ready) (rtems_gpio *);
     rtems_status_code (*set_resolution) (rtems_gpio *, unsigned int);
     rtems_status_code (*set_alignment) (rtems_gpio *, rtems_adc_align);
     rtems_status_code (*configure_interrupt) (rtems_gpio *, rtems_adc_isr, void *);
@@ -80,12 +80,13 @@ extern rtems_status_code rtems_adc_read_raw_timeout(
     uint32_t *result,
     uint32_t timeout
 );
+
+extern rtems_adc_status rtems_adc_start_read_nb(
+    rtems_gpio *base
+);
 extern rtems_status_code rtems_adc_read_raw_nb(
     rtems_gpio *base, 
     uint32_t *result
-);
-extern rtems_adc_status rtems_adc_is_ready(
-    rtems_gpio *base
 );
 
 extern rtems_status_code rtems_adc_register_tf(
@@ -96,12 +97,12 @@ extern rtems_status_code rtems_adc_register_tf(
 extern rtems_status_code rtems_adc_remove_tf(
     uint32_t index
 );
-extern rtems_status_code rtems_adc_read(
+extern rtems_status_code rtems_adc_read_tf(
     rtems_gpio *base, 
     uint32_t tf_index,
     double *result
 );
-extern rtems_status_code rtems_adc_read_timeout(
+extern rtems_status_code rtems_adc_read_tf_timeout(
     rtems_gpio *base, 
     uint32_t tf_index,
     double *result,
