@@ -43,7 +43,7 @@ bool stm32f4_is_adc_pin(
   * This function should be called in bspstarthook under
   * if ADC is enabled.
   */
-rtems_status_code stm32f4_adc_start(
+extern rtems_status_code stm32f4_adc_start(
     void
 );
 
