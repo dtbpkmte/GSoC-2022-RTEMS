@@ -11,6 +11,12 @@
 #define NUM_ADC 1
 #endif
 
+#define STM32F4_GET_ADCx_FROM_NUMBER(num)       (\
+    ( num ) == 1                 ? ADC1 :        \
+    ( num ) == 2 && NUM_ADC >= 2 ? ADC2 :        \
+    ( num ) == 3 && NUM_ADC == 3 ? ADC3 :        \
+                                   NULL)
+
 /************** Interrupt manager *****************/
 typedef struct {
     void *arg;
@@ -22,19 +28,31 @@ typedef struct {
     rtems_gpio_isr isr;
 } stm32f4_interrupt;
 
+static void adc_irq_handler(void *arg);
+
 static stm32f4_interrupt isr_table[NUM_ADC];
 
 /**
   * This tells if there is already an ISR registered at each
   * table index (element set to true).
   */
-static bool isr_status_table[NUM_ADC] = {0};
+static bool isr_registered[NUM_ADC] = {0};
 
 typedef struct {
     uint32_t adc_value;
     rtems_adc_status status;
 } stm32f4_adc_data;
 static stm32f4_adc_data adc_data[NUM_ADC] = {0};
+
+static stm32f4_interrupt nb_interrupt = 
+{
+    .arg = {
+        .arg = NULL,
+        .gpio = NULL
+    },
+    .isr = adc_irq_handler
+};
+
 
 static void stm32f4_adc_select_channel(
     stm32f4_gpio *gpio
@@ -178,8 +196,8 @@ bool stm32f4_is_adc_pin(
 
 static const rtems_adc_handlers stm32f4_adc_handlers = {
     .read_raw = stm32f4_adc_read_raw,
+    .start_read_raw_nb = stm32f4_adc_start_read_raw_nb,
     .read_raw_nb = stm32f4_adc_read_raw_nb,
-    .is_ready = stm32f4_adc_is_ready,
     .set_resolution = stm32f4_adc_set_resolution,
     .set_alignment = stm32f4_adc_set_alignment,
     .configure_interrupt = stm32f4_adc_configure_interrupt,
@@ -209,21 +227,14 @@ rtems_status_code stm32f4_adc_start(
     void
 )
 {
-    // Create 1-element message queues for non-blocking
-    // reads
-    rtems_status_code sc;
-    int i;
-    for (i = 0; i < NUM_ADC; ++i) {
-        sc = rtems_message_queue_create(
-            rtems_build_name(0, 0, 0, i),
-            1,
-            sizeof(uint32_t),
-            RTEMS_FIFO | RTEMS_LOCAL,
-            &adc_message_queue_ids[i];
-        );
-        if (sc != RTEMS_SUCCESSFUL)
-            return sc;
-    }
+    // Install ISR for non-blocking read
+    return rtems_interrupt_handler_install(
+            ADC_IRQn,
+            NULL,
+            RTEMS_INTERRUPT_SHARED,
+            adc_irq_handler,
+            NULL
+    );
     return RTEMS_SUCCESSFUL;
 }
 
@@ -301,6 +312,8 @@ rtems_status_code stm32f4_adc_start_read_raw_nb(
     if (adc_data[adc_num].status == RTEMS_ADC_NOT_STARTED) {
         adc_data[adc_num].status = RTEMS_ADC_NOT_READY;
         // start conversion here
+        LL_ADC_EnableIT_EOCS(gpio->ADCx);
+        LL_ADC_REG_StartConversionSWStart(gpio->ADCx);
         return RTEMS_SUCCESSFUL;
     }
     return RTEMS_UNSATISFIED;
@@ -376,22 +389,25 @@ rtems_status_code stm32f4_adc_configure_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    isr_table[gpio->pin] = (stm32f4_interrupt){
-        .arg = {
-            .arg = arg,
-            .gpio = gpio
-        },
-        .isr = isr
-    };
-    rtems_status_code sc = rtems_interrupt_handler_install(
-            ADC_IRQn,
-            NULL,
-            RTEMS_INTERRUPT_SHARED,
-            adc_irq_handler,
-            &isr_table[gpio->pin].arg
-    );
-    
-    return sc;
+    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
+    if (!isr_registered[adc_num]) {
+        isr_table[adc_num] = (stm32f4_interrupt){
+            .arg = {
+                .arg = arg,
+                .gpio = gpio
+            },
+            .isr = isr
+        };
+        isr_registered[adc_num] = true;
+        return rtems_interrupt_handler_install(
+                ADC_IRQn,
+                NULL,
+                RTEMS_INTERRUPT_SHARED,
+                adc_irq_handler,
+                &isr_table[adc_num].arg
+        );
+    }
+    return RTEMS_UNSATISFIED;
 }
 
 rtems_status_code stm32f4_adc_remove_interrupt(
@@ -399,13 +415,14 @@ rtems_status_code stm32f4_adc_remove_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
+    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
     rtems_status_code sc = rtems_interrupt_handler_remove(
             ADC_IRQn,
             adc_irq_handler,
-            &isr_table[gpio->pin].arg
+            &isr_table[adc_num].arg
     );
     if (sc == RTEMS_SUCCESSFUL) {
-        isr_table[gpio->pin] = (stm32f4_interrupt){0};
+        isr_registered[adc_num] = false;
     }
     return sc;
 }
@@ -415,8 +432,11 @@ rtems_status_code stm32f4_adc_enable_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    LL_ADC_EnableIT_EOCS(gpio->ADCx);
-    return RTEMS_SUCCESSFUL;
+    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx)]) {
+        LL_ADC_EnableIT_EOCS(gpio->ADCx);
+        return RTEMS_SUCCESSFUL;
+    }
+    return RTEMS_UNSATISFIED;
 }
 
 rtems_status_code stm32f4_adc_disable_interrupt(
@@ -424,24 +444,35 @@ rtems_status_code stm32f4_adc_disable_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    LL_ADC_DisableIT_EOCS(gpio->ADCx);
-    return RTEMS_NOT_IMPLEMENTED;
+    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx)]) {
+        LL_ADC_DisableIT_EOCS(gpio->ADCx);
+        return RTEMS_SUCCESSFUL;
+    }
+    return RTEMS_UNSATISFIED;
 }
 
-void adc_irq_handler(void *arg) {
-    stm32f4_interrupt_arg *stm32_arg = (stm32f4_interrupt_arg *) arg;
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(stm32_arg->gpio->ADCx);
-    if (!isr_status_table[adc_num]) {
-        // if the current IRQ has no ISR registered,
-        // it means the IRQ happens from a non-blocking read
-        if (adc_data[adc_num].status == RTEMS_ADC_NOT_READY) {
-            adc_data[adc_num].adc_value = LL_ADC_REG_ReadConversionData32(
-                    stm32f4_arg->gpio->ADCx);
-            adc_data[adc_num].status = RTEMS_ADC_READY;
+static void adc_irq_handler(void *arg) {
+    unsigned int i;
+    for (i = 0; i < NUM_ADC; ++i) {
+        ADC_TypeDef *adcx = STM32F4_GET_ADCx_FROM_NUMBER(i);
+        if (LL_ADC_IsActiveFlag_EOCS(adcx)) {
+            // if the current IRQ has no ISR registered,
+            // it means the IRQ happens from a non-blocking read
+            if (!isr_registered[i]) {
+                if (adc_data[i].status == RTEMS_ADC_NOT_READY) {
+                    LL_ADC_DisableIT_EOCS(adcx);
+                    adc_data[i].adc_value = LL_ADC_REG_ReadConversionData32(adcx);
+                    adc_data[i].status = RTEMS_ADC_READY;
+                }
+            } 
+            // if there is an ISR registered, call it
+            else {
+                LL_ADC_ClearFlag_EOCS(adcx);
+                stm32f4_interrupt_arg *stm32_arg = (stm32f4_interrupt_arg *) arg;
+                (*isr_table[i].isr)(stm32_arg->arg);
+            }
+            break;
         }
-    } else {
-        // if there is an ISR registered, call it
-        (*isr_table[adc_num].isr)(stm32_arg->arg);
     }
 }
 
