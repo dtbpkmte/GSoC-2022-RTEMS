@@ -55,9 +55,14 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#if BSP_ENABLE_ADC == 1
 #define RTEMS_GPIO_BUILD_BASE(gpioh, adch) \
     (rtems_gpio) { .gpio_handlers = ( gpioh ), \
                    .adc_handlers = ( adch ) };
+#else
+#define RTEMS_GPIO_BUILD_BASE(gpioh) \
+    (rtems_gpio) { .gpio_handlers = ( gpioh ) }
+#endif /* BSP_ENABLE_ADC */
 
 /**
   * @name GPIO data structures
@@ -223,16 +228,24 @@ struct rtems_gpio {
       */
     const rtems_gpio_handlers *gpio_handlers;
     /**
+      * @brief This member is a virtual pin number, counting from
+      *        0 (zero).
+      */
+    uint32_t virtual_pin;
+#if BSP_ENABLE_ADC == 1
+    /**
       * @brief This member is a pointer to a structure containing
       *        pointers to handlers of an ADC.
       */
     const rtems_adc_handlers *adc_handlers;
 
     /**
-      * @brief This member is a virtual pin number, counting from
-      *        0 (zero).
+      * @brief This member is a pointer to a transfer function
+      *        that will be assigned to this pin.
+      * If no transfer function assigned, it should remain NULL.
       */
-    uint32_t virtual_pin;
+    rtems_adc_tf tf;
+#endif /* BSP_ENABLE_GPIO */
 };
 
 /** @} */
