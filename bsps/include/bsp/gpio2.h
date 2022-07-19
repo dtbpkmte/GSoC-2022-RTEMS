@@ -245,6 +245,7 @@ struct rtems_gpio {
       * If no transfer function assigned, it should remain NULL.
       */
     rtems_adc_tf tf;
+    void *tf_params;
 #endif /* BSP_ENABLE_GPIO */
 };
 
