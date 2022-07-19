@@ -43,6 +43,7 @@ rtems_status_code rtems_adc_read_raw_timeout(
 {
     return base->adc_handlers->read_raw(base, result, timeout);
 }
+
 rtems_status_code rtems_adc_read_raw_nb(
     rtems_gpio *base,
     uint32_t *result
@@ -51,8 +52,8 @@ rtems_status_code rtems_adc_read_raw_nb(
     return base->adc_handlers->read_raw_nb(base, result);
 }
 
-rtems_status_code rtems_adc_register_tf(
-    uint32_t index,
+rtems_status_code rtems_adc_assign_tf(
+    rtems_gpio *base,
     rtems_adc_tf tf,
     void *params
 )
@@ -60,14 +61,13 @@ rtems_status_code rtems_adc_register_tf(
     return RTEMS_NOT_IMPLEMENTED;
 }
 rtems_status_code rtems_adc_remove_tf(
-    uint32_t index
+    rtems_gpio *base
 )
 {
     return RTEMS_NOT_IMPLEMENTED;
 }
 rtems_status_code rtems_adc_read(
     rtems_gpio *base,
-    uint32_t tf_index,
     double *result
 )
 {
@@ -75,26 +75,25 @@ rtems_status_code rtems_adc_read(
 }
 rtems_status_code rtems_adc_read_timeout(
     rtems_gpio *base,
-    uint32_t tf_index,
     double *result,
     uint32_t timeout
 )
 {
     return RTEMS_NOT_IMPLEMENTED;
 }
+
+rtems_adc_status rtems_adc_start_read_nb(
+    rtems_gpio *base
+)
+{
+    return base->adc_handlers->start_read_raw_nb(base);
+}
 rtems_status_code rtems_adc_read_nb(
     rtems_gpio *base,
-    uint32_t tf_index,
     double *result
 )
 {
     return RTEMS_NOT_IMPLEMENTED;
-}
-rtems_adc_status rtems_adc_is_ready(
-    rtems_gpio *base
-)
-{
-    return base->adc_handlers->is_ready(base);
 }
 
 rtems_status_code rtems_adc_set_resolution(
