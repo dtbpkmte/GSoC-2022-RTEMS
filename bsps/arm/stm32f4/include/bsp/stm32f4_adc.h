@@ -8,7 +8,7 @@
 #define STM32F4_ADC_DEFAULT_ALIGNMENT           RTEMS_ADC_ALIGN_RIGHT
 #define STM32F4_ADC_DEFAULT_SAMPLINGTIME       LL_ADC_SAMPLINGTIME_3CYCLES
 
-rtems_adc_handlers *stm32f4_get_adc_handlers(
+const rtems_adc_handlers *stm32f4_get_adc_handlers(
     void
 );
 
@@ -18,6 +18,12 @@ rtems_adc_handlers *stm32f4_get_adc_handlers(
       (uintptr_t) ( ADCx ) == (uintptr_t) ADC2 ? 2 : \
       (uintptr_t) ( ADCx ) == (uintptr_t) ADC3 ? 3 : \
                                                  0 )
+#define STM32F4_GET_ADCx_FROM_NUMBER(num)       (\
+    ( num ) == 1                 ? ADC1 :        \
+    ( num ) == 2 && NUM_ADC >= 2 ? ADC2 :        \
+    ( num ) == 3 && NUM_ADC == 3 ? ADC3 :        \
+                                   NULL)
+
 ADC_TypeDef *stm32f4_get_ADCx(
     GPIO_TypeDef *gpiox
 );
@@ -58,7 +64,7 @@ rtems_status_code stm32f4_adc_start_read_raw_nb(
     rtems_gpio *base
 );
 
-rtems_status_code stm32f4_adc_read_raw_nb(
+rtems_adc_status stm32f4_adc_read_raw_nb(
     rtems_gpio *base,
     uint32_t *result
 );

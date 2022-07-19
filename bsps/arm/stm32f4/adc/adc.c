@@ -11,12 +11,6 @@
 #define NUM_ADC 1
 #endif
 
-#define STM32F4_GET_ADCx_FROM_NUMBER(num)       (\
-    ( num ) == 1                 ? ADC1 :        \
-    ( num ) == 2 && NUM_ADC >= 2 ? ADC2 :        \
-    ( num ) == 3 && NUM_ADC == 3 ? ADC3 :        \
-                                   NULL)
-
 /************** Interrupt manager *****************/
 typedef struct {
     void *arg;
@@ -43,16 +37,6 @@ typedef struct {
     rtems_adc_status status;
 } stm32f4_adc_data;
 static stm32f4_adc_data adc_data[NUM_ADC] = {0};
-
-static stm32f4_interrupt nb_interrupt = 
-{
-    .arg = {
-        .arg = NULL,
-        .gpio = NULL
-    },
-    .isr = adc_irq_handler
-};
-
 
 static void stm32f4_adc_select_channel(
     stm32f4_gpio *gpio
@@ -206,7 +190,7 @@ static const rtems_adc_handlers stm32f4_adc_handlers = {
     .disable_interrupt = stm32f4_adc_disable_interrupt
 };
 
-rtems_adc_handlers *stm32f4_get_adc_handlers(
+const rtems_adc_handlers *stm32f4_get_adc_handlers(
     void
 )
 {
@@ -308,7 +292,7 @@ rtems_status_code stm32f4_adc_start_read_raw_nb(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(stm32_arg->gpio->ADCx);
+    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
     if (adc_data[adc_num].status == RTEMS_ADC_NOT_STARTED) {
         adc_data[adc_num].status = RTEMS_ADC_NOT_READY;
         // start conversion here
@@ -325,7 +309,7 @@ rtems_adc_status stm32f4_adc_read_raw_nb(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(stm32_arg->gpio->ADCx);
+    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
     rtems_adc_status ret = adc_data[adc_num].status;
     if (ret == RTEMS_ADC_READY) {
         *result = adc_data[adc_num].adc_value;
