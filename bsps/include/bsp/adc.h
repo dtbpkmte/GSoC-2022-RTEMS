@@ -62,7 +62,7 @@ typedef struct rtems_adc_handlers rtems_adc_handlers;
 struct rtems_adc_handlers {
     rtems_status_code (*read_raw) (rtems_gpio *, uint32_t *, uint32_t);
     rtems_status_code (*start_read_raw_nb) (rtems_gpio *);
-    rtems_status_code (*read_raw_nb) (rtems_gpio *, uint32_t *);
+    rtems_adc_status (*read_raw_nb) (rtems_gpio *, uint32_t *);
     rtems_status_code (*set_resolution) (rtems_gpio *, unsigned int);
     rtems_status_code (*set_alignment) (rtems_gpio *, rtems_adc_align);
     rtems_status_code (*configure_interrupt) (rtems_gpio *, rtems_adc_isr, void *);
@@ -71,6 +71,14 @@ struct rtems_adc_handlers {
     rtems_status_code (*disable_interrupt) (rtems_gpio *);
 };
 
+/**
+  * @brief Read raw ADC value with infinite timeout.
+  *
+  * @param base[in]
+  * @param result[out]
+  *
+  * @retval
+  */
 extern rtems_status_code rtems_adc_read_raw(
     rtems_gpio *base, 
     uint32_t *result
@@ -81,36 +89,58 @@ extern rtems_status_code rtems_adc_read_raw_timeout(
     uint32_t timeout
 );
 
+/**
+  * @brief Starts a non-blocking ADC conversion.
+  *
+  * This function must be called before
+  * rtems_adc_read_raw_nb() or rtems_adc_read_nb()
+  *
+  * @param base
+  *
+  * @retval
+  */
 extern rtems_adc_status rtems_adc_start_read_nb(
     rtems_gpio *base
 );
+
 extern rtems_status_code rtems_adc_read_raw_nb(
     rtems_gpio *base, 
     uint32_t *result
 );
 
-extern rtems_status_code rtems_adc_register_tf(
-    uint32_t index, 
+extern rtems_status_code rtems_adc_assign_tf(
+    rtems_gpio *base,
     rtems_adc_tf tf, 
     void *params
 );
 extern rtems_status_code rtems_adc_remove_tf(
-    uint32_t index
+    rtems_gpio *base
 );
-extern rtems_status_code rtems_adc_read_tf(
+
+/**
+  * @brief Reads an ADC value with infinite timeout.
+  *
+  * If no transfer function assigned, this will
+  * return the raw value via result pointer. Else, 
+  * it returns the calculated value using transfer
+  * function.
+  *
+  * @param base[in]
+  * @param result[out]
+  *
+  * @retval
+  */
+extern rtems_status_code rtems_adc_read(
     rtems_gpio *base, 
-    uint32_t tf_index,
     double *result
 );
-extern rtems_status_code rtems_adc_read_tf_timeout(
+extern rtems_status_code rtems_adc_read_timeout(
     rtems_gpio *base, 
-    uint32_t tf_index,
     double *result,
     uint32_t timeout
 );
 extern rtems_status_code rtems_adc_read_nb(
     rtems_gpio *base, 
-    uint32_t tf_index,
     double *result
 );
 
