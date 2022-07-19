@@ -59,15 +59,71 @@ typedef struct rtems_adc_handlers rtems_adc_handlers;
 
 #include <bsp/gpio2.h>
 
+/**
+  * @brief Structure containing pointers to ADC handlers of a BSP/driver.
+  *
+  * Each BSP/driver must define its own handlers and create an object 
+  * of this struct with pointers to those handlers.
+  */
 struct rtems_adc_handlers {
+    /**
+      * @brief Pointer to a function that reads raw ADC value.
+      * This function is blocking and has a timeout parameter.
+      */
     rtems_status_code (*read_raw) (rtems_gpio *, uint32_t *, uint32_t);
+    /**
+      * @brief Pointer to a function that starts ADC conversion
+      *        in non-blocking style.
+      */
     rtems_status_code (*start_read_raw_nb) (rtems_gpio *);
+    /**
+      * @brief Pointer to a function that gets a raw ADC value when
+      *        available after a start_read_raw_nb() call. 
+      * If data is not available, the function should return a status
+      * to indicate that.
+      */
     rtems_adc_status (*read_raw_nb) (rtems_gpio *, uint32_t *);
+    /**
+      * @brief Pointer to a function that sets the resolution of an
+      *        ADC controller associated with a pin.
+      *
+      * @note If a controller contains multiple pins, the resolution
+      *       setting may affect all of them.
+      */
     rtems_status_code (*set_resolution) (rtems_gpio *, unsigned int);
+    /**
+      * @brief Pointer to a function that sets the alignment of an
+      *        ADC controller associated with a pin.
+      *
+      * @note If a controller contains multiple pins, the alignment
+      *       setting may affect all of them.
+      */
     rtems_status_code (*set_alignment) (rtems_gpio *, rtems_adc_align);
+    /**
+      * @brief This member is the pointer to a handler for configuring
+      *        interrupt of a pin.
+      *
+      * This handler should register ISR and its arguments.
+      *
+      * @note Interrupt may occur when ADC conversion is completed.
+      * @note Enabling interrupt should be done in enable_interrupt()
+      *       handler.
+      */
     rtems_status_code (*configure_interrupt) (rtems_gpio *, rtems_adc_isr, void *);
+    /**
+      * @brief This member is the pointer to a handler for removing
+      *        interrupt settings of a pin.
+      */
     rtems_status_code (*remove_interrupt) (rtems_gpio *);
+    /**
+      * @brief This member is the pointer to a handler for enabling
+      *        interrupt functionality of a pin.
+      */
     rtems_status_code (*enable_interrupt) (rtems_gpio *);
+    /**
+      * @brief This member is the pointer to a handler for disabling
+      *        interrupt of a pin.
+      */
     rtems_status_code (*disable_interrupt) (rtems_gpio *);
 };
 
@@ -99,20 +155,32 @@ extern rtems_status_code rtems_adc_read_raw_timeout(
   *
   * @retval
   */
-extern rtems_adc_status rtems_adc_start_read_nb(
+extern rtems_status_code rtems_adc_start_read_nb(
     rtems_gpio *base
 );
 
-extern rtems_status_code rtems_adc_read_raw_nb(
+/**
+  * @brief Reads raw ADC value non-blocking.
+  */
+extern rtems_adc_status rtems_adc_read_raw_nb(
     rtems_gpio *base, 
     uint32_t *result
 );
 
+/**
+  * @brief Assigns a transfer function with parameters
+  *        to a pin.
+  */
 extern rtems_status_code rtems_adc_assign_tf(
     rtems_gpio *base,
     rtems_adc_tf tf, 
     void *params
 );
+
+/**
+  * @brief Removes the assigned transfer function from
+  *        a pin.
+  */
 extern rtems_status_code rtems_adc_remove_tf(
     rtems_gpio *base
 );
@@ -139,7 +207,7 @@ extern rtems_status_code rtems_adc_read_timeout(
     double *result,
     uint32_t timeout
 );
-extern rtems_status_code rtems_adc_read_nb(
+extern rtems_adc_status rtems_adc_read_nb(
     rtems_gpio *base, 
     double *result
 );
