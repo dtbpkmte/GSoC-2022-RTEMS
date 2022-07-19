@@ -226,10 +226,8 @@ rtems_status_code stm32f4_gpio_get(
     tmp->port = STM32F4_GET_PORT(interm_pin);
 
 #if BSP_ENABLE_ADC == 1
-    rtems_adc_handlers *adc_handlers = NULL;
     if (stm32f4_is_adc_pin(tmp)) {
         tmp->ADCx = stm32f4_get_ADCx(tmp->port);
-        adc_handlers = stm32f4_get_adc_handlers();
     } else {
         tmp->ADCx = NULL;
     }
@@ -238,7 +236,7 @@ rtems_status_code stm32f4_gpio_get(
     tmp->base = RTEMS_GPIO_BUILD_BASE(
             &stm32f4_gpio_handlers
 #if BSP_ENABLE_ADC == 1
-            , adc_handlers
+            , stm32f4_get_adc_handlers()
 #endif /* BSP_ENABLE_ADC */
     );
 
