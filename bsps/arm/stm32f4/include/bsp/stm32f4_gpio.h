@@ -51,7 +51,10 @@ typedef struct {
       * @brief This member is HAL GPIOx pointer.
       */
     GPIO_TypeDef *port;
+#if BSP_ENABLE_ADC == 1
     ADC_TypeDef *ADCx;
+    
+#endif /* BSP_ENABLE_ADC == 1 */
 } stm32f4_gpio;
 
 /**

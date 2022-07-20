@@ -1,4 +1,7 @@
-#include <bsp/adc.h>
+#ifndef LIBBSP_ARM_STM32F4_BSP_ADC
+#define LIBBSP_ARM_STM32F4_BSP_ADC
+
+#include <rtems/sysinit.h>
 #include <bsp/adc.h>
 #include <bsp/stm32f4_gpio.h>
 #include <stm32f4xx_ll_bus.h>
@@ -43,7 +46,7 @@ bool stm32f4_is_adc_pin(
   * This function should be called in bspstarthook under
   * if ADC is enabled.
   */
-extern rtems_status_code stm32f4_adc_start(
+extern void stm32f4_adc_start(
     void
 );
 
@@ -96,3 +99,5 @@ rtems_status_code stm32f4_adc_enable_interrupt(
 rtems_status_code stm32f4_adc_disable_interrupt(
     rtems_gpio *base
 );
+
+#endif /* LIBBSP_ARM_STM32F4_BSP_ADC */

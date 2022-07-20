@@ -26,9 +26,6 @@ void BSP_START_TEXT_SECTION bsp_start_hook_1(void)
 #if STM32F4_ENABLE_GENERIC_GPIO == 1
   bsp_gpio_register_controllers();
 #endif /* STM32F4_ENABLE_GENERIC_GPIO */
-#if BSP_ENABLE_ADC == 1
-    stm32f4_adc_start();
-#endif /* BSP_ENABLE_ADC */
 
 #endif /* __rtems__ */
 }
