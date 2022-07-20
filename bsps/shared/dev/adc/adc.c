@@ -33,7 +33,10 @@ rtems_status_code rtems_adc_read_raw(
     uint32_t *result
 )
 {
-    return base->adc_handlers->read_raw(base, result, RTEMS_ADC_NO_TIMEOUT);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->read_raw(base, result, RTEMS_ADC_NO_TIMEOUT);
+    }
+    return RTEMS_UNSATISFIED;
 }
 rtems_status_code rtems_adc_read_raw_timeout(
     rtems_gpio *base,
@@ -41,7 +44,10 @@ rtems_status_code rtems_adc_read_raw_timeout(
     uint32_t timeout
 )
 {
-    return base->adc_handlers->read_raw(base, result, timeout);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->read_raw(base, result, timeout);
+    }
+    return RTEMS_UNSATISFIED;
 }
 
 rtems_adc_status rtems_adc_read_raw_nb(
@@ -49,7 +55,10 @@ rtems_adc_status rtems_adc_read_raw_nb(
     uint32_t *result
 )
 {
-    return base->adc_handlers->read_raw_nb(base, result);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->read_raw_nb(base, result);
+    }
+    return RTEMS_UNSATISFIED;
 }
 
 rtems_status_code rtems_adc_assign_tf(
@@ -76,7 +85,7 @@ rtems_status_code rtems_adc_read(
 )
 {
     uint32_t raw;
-    rtems_status_code sc = base->adc_handlers->read_raw(base, &raw, RTEMS_ADC_NO_TIMEOUT);
+    rtems_status_code sc = rtems_adc_read_raw(base, &raw);
     if (sc == RTEMS_SUCCESSFUL) {
         if (base->tf == NULL)
             *result = (double) raw;
@@ -92,7 +101,7 @@ rtems_status_code rtems_adc_read_timeout(
 )
 {
     uint32_t raw;
-    rtems_status_code sc = base->adc_handlers->read_raw(base, &raw, timeout);
+    rtems_status_code sc = rtems_adc_read_raw_timeout(base, &raw, timeout);
     if (sc == RTEMS_SUCCESSFUL) {
         if (base->tf == NULL)
             *result = (double) raw;
@@ -106,7 +115,9 @@ rtems_status_code rtems_adc_start_read_nb(
     rtems_gpio *base
 )
 {
-    return base->adc_handlers->start_read_raw_nb(base);
+    if (base->is_adc_pin)
+        return base->adc_handlers->start_read_raw_nb(base);
+    return RTEMS_UNSATISFIED;
 }
 rtems_adc_status rtems_adc_read_nb(
     rtems_gpio *base,
@@ -114,7 +125,7 @@ rtems_adc_status rtems_adc_read_nb(
 )
 {
     uint32_t raw;
-    rtems_adc_status sc = base->adc_handlers->read_raw_nb(base, &raw);
+    rtems_adc_status sc = rtems_adc_read_raw_nb(base, &raw);
     if (sc == RTEMS_ADC_READY) {
         if (base->tf == NULL)
             *result = (double) raw;
@@ -129,14 +140,20 @@ rtems_status_code rtems_adc_set_resolution(
     unsigned int bits
 )
 {
-    return base->adc_handlers->set_resolution(base, bits);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->set_resolution(base, bits);
+    }
+    return RTEMS_UNSATISFIED;
 }
 rtems_status_code rtems_adc_set_alignment(
     rtems_gpio *base,
     rtems_adc_align align
 )
 {
-    return base->adc_handlers->set_alignment(base, align);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->set_alignment(base, align);
+    }
+    return RTEMS_UNSATISFIED;
 }
 
 rtems_status_code rtems_adc_configure_interrupt(
@@ -145,23 +162,35 @@ rtems_status_code rtems_adc_configure_interrupt(
     void *arg
 )
 {
-    return base->adc_handlers->configure_interrupt(base, isr, arg);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->configure_interrupt(base, isr, arg);
+    }
+    return RTEMS_UNSATISFIED;
 }
 rtems_status_code rtems_adc_remove_interrupt(
     rtems_gpio *base
 )
 {
-    return base->adc_handlers->remove_interrupt(base);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->remove_interrupt(base);
+    }
+    return RTEMS_UNSATISFIED;
 }
 rtems_status_code rtems_adc_enable_interrupt(
     rtems_gpio *base
 )
 {
-    return base->adc_handlers->enable_interrupt(base);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->enable_interrupt(base);
+    }
+    return RTEMS_UNSATISFIED;
 }
 rtems_status_code rtems_adc_disable_interrupt(
     rtems_gpio *base
 )
 {
-    return base->adc_handlers->disable_interrupt(base);
+    if (base->is_adc_pin) {
+        return base->adc_handlers->disable_interrupt(base);
+    }
+    return RTEMS_UNSATISFIED;
 }
