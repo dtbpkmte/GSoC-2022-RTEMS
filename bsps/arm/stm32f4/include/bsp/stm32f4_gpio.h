@@ -35,10 +35,16 @@
 #include <bsp/gpio2.h>
 
 /**
+  * Forward declaration before including ADC header.
+  */
+typedef struct stm32f4_gpio stm32f4_gpio;
+#include <bsp/stm32f4_adc.h>
+
+/**
   * @brief STM32F4 BSP GPIO structure
   *
   */
-typedef struct {
+struct stm32f4_gpio {
     /**
       * @brief This member is a rtems_gpio object.
       */
@@ -52,10 +58,14 @@ typedef struct {
       */
     GPIO_TypeDef *port;
 #if BSP_ENABLE_ADC == 1
-    ADC_TypeDef *ADCx;
-    
+    /**
+      * @brief This member is the pointer to ADC 
+      *        configuration object.
+      * @see stm32f4_adc_config
+      */
+    stm32f4_adc_config *adc_config;
 #endif /* BSP_ENABLE_ADC == 1 */
-} stm32f4_gpio;
+};
 
 /**
   * @brief Macro to get stm32f4_gpio object from a base rtems_gpio

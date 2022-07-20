@@ -28,8 +28,8 @@
 #include <bsp.h>
 #include <rtems.h>
 #include <stdlib.h>
-#include <bsp/stm32f4_gpio.h>
 #include <bsp/stm32f4_adc.h>
+#include <bsp/stm32f4_gpio.h>
 
 /*********** Helpers *****************/
 
@@ -226,19 +226,25 @@ rtems_status_code stm32f4_gpio_get(
     tmp->port = STM32F4_GET_PORT(interm_pin);
 
 #if BSP_ENABLE_ADC == 1
-    if (stm32f4_is_adc_pin(tmp)) {
-        tmp->ADCx = stm32f4_get_ADCx(tmp->port);
-    } else {
-        tmp->ADCx = NULL;
-    }
+    bool is_adc_pin = stm32f4_is_adc_pin(tmp);
+    rtems_adc_handlers *adc_handlers = NULL;
+    if (is_adc_pin)
+        adc_handlers = stm32f4_get_adc_handlers();
 #endif /* BSP_ENABLE_ADC */
 
     tmp->base = RTEMS_GPIO_BUILD_BASE(
             &stm32f4_gpio_handlers
 #if BSP_ENABLE_ADC == 1
-            , stm32f4_get_adc_handlers()
+            , is_adc_pin
+            , adc_handlers
 #endif /* BSP_ENABLE_ADC */
     );
+
+#if BSP_ENABLE_ADC == 1
+    if (is_adc_pin) {
+        stm32f4_adc_get(tmp);
+    }
+#endif /* BSP_ENABLE_ADC */
 
     *out = (rtems_gpio *) tmp;
     return RTEMS_SUCCESSFUL;
@@ -249,6 +255,11 @@ rtems_status_code stm32f4_gpio_destroy(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
+#if BSP_ENABLE_ADC == 1
+    rtems_status_code sc = stm32f4_adc_destroy(gpio);
+    if (sc != RTEMS_SUCCESSFUL)
+        return sc;
+#endif /* BSP_ENABLE_ADC */
     free(gpio);
     return RTEMS_SUCCESSFUL;
 }

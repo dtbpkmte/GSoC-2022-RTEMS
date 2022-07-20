@@ -1,4 +1,5 @@
 #include <bsp/stm32f4_adc.h>
+#include <stdlib.h>
 
 #if defined(ADC3)
 #define NUM_ADC 3
@@ -35,7 +36,7 @@ typedef struct {
 } stm32f4_adc_data;
 static stm32f4_adc_data adc_data[NUM_ADC] = {0};
 
-static void stm32f4_adc_select_channel(
+static rtems_status_code stm32f4_adc_select_channel(
     stm32f4_gpio *gpio
 );
 
@@ -194,14 +195,75 @@ const rtems_adc_handlers *stm32f4_get_adc_handlers(
     return &stm32f4_adc_handlers;
 }
 
-static void stm32f4_adc_select_channel(
+rtems_status_code stm32f4_adc_get(
     stm32f4_gpio *gpio
 )
 {
-    uint32_t adc_channel;
-    stm32f4_get_LL_ADC_CHANNEL(gpio, &adc_channel);
-    LL_ADC_REG_SetSequencerRanks(gpio->ADCx, LL_ADC_REG_RANK_1, adc_channel);
-    LL_ADC_SetChannelSamplingTime(gpio->ADCx, adc_channel, STM32F4_ADC_DEFAULT_SAMPLINGTIME);
+    // populate ADC config object
+    gpio->adc_config = malloc(sizeof(stm32f4_adc_config));
+    if (gpio->adc_config == NULL) {
+        return RTEMS_NO_MEMORY;
+    }
+    STM32F4_LOCK(gpio->adc_config);
+    STM32F4_LOCK(&gpio->adc_config->ADCx);
+    gpio->adc_config->ADCx.ADCx = stm32f4_get_ADCx(gpio->port);
+    stm32f4_get_LL_ADC_CHANNEL(gpio, &gpio->adc_config->channel);
+    gpio->adc_config->resolution = STM32F4_ADC_DEFAULT_RESOLUTION;
+    gpio->adc_config->alignment = STM32F4_ADC_DEFAULT_ALIGNMENT;
+    STM32F4_UNLOCK(&gpio->adc_config->ADCx);
+    STM32F4_UNLOCK(gpio->adc_config);
+    return RTEMS_SUCCESSFUL;
+}
+
+rtems_status_code stm32f4_adc_destroy(
+    stm32f4_gpio *gpio
+)
+{
+    if (gpio->adc_config != NULL) {
+        free(gpio->adc_config);
+        return RTEMS_SUCCESSFUL;
+    }
+    return RTEMS_UNSATISFIED;
+}
+
+static rtems_status_code stm32f4_adc_select_channel(
+    stm32f4_gpio *gpio
+)
+{
+    if (!STM32F4_IS_LOCKED(gpio->adc_config) &&
+            !STM32F4_IS_LOCKED(&gpio->adc_config->ADCx)) {
+        STM32F4_LOCK(gpio->adc_config);
+        STM32F4_LOCK(&gpio->adc_config->ADCx);
+
+        LL_ADC_Disable(gpio->adc_config->ADCx.ADCx);
+
+        LL_ADC_SetResolution(gpio->adc_config->ADCx.ADCx, gpio->adc_config->resolution);
+        LL_ADC_SetDataAlignment(gpio->adc_config->ADCx.ADCx, gpio->adc_config->alignment);
+        LL_ADC_REG_SetSequencerRanks(
+            gpio->adc_config->ADCx.ADCx, 
+            LL_ADC_REG_RANK_1, 
+            gpio->adc_config->channel
+        );
+        LL_ADC_SetChannelSamplingTime(
+            gpio->adc_config->ADCx.ADCx, 
+            gpio->adc_config->channel, 
+            STM32F4_ADC_DEFAULT_SAMPLINGTIME
+        );
+
+        LL_ADC_Enable(gpio->adc_config->ADCx.ADCx);
+        /* Delay for ADC stabilization time */
+        /* Compute number of CPU cycles to wait for */
+        volatile uint32_t counter = (ADC_STAB_DELAY_US * (SystemCoreClock / 1000000U));
+        while(counter != 0U)
+        {
+          counter--;
+        }
+
+        STM32F4_UNLOCK(gpio->adc_config);
+        STM32F4_UNLOCK(&gpio->adc_config->ADCx);
+        return RTEMS_SUCCESSFUL;
+    }
+    return RTEMS_UNSATISFIED;
 }
 
 void stm32f4_adc_start(
@@ -228,9 +290,9 @@ rtems_status_code stm32f4_adc_init(
     stm32f4_gpio *gpio
 )
 {
-    if (!LL_ADC_IsEnabled(gpio->ADCx)) {
+    if (!LL_ADC_IsEnabled(gpio->adc_config->ADCx.ADCx)) {
         // Enable clock
-        switch ((uintptr_t) gpio->ADCx) {
+        switch ((uintptr_t) gpio->adc_config->ADCx.ADCx) {
             case (uintptr_t) ADC1:
                 LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC1);
                 break;
@@ -245,22 +307,26 @@ rtems_status_code stm32f4_adc_init(
         }
 
         // ADC common setup
-        stm32f4_adc_set_resolution((rtems_gpio *) gpio, STM32F4_ADC_DEFAULT_RESOLUTION);
-        stm32f4_adc_set_alignment((rtems_gpio *) gpio, STM32F4_ADC_DEFAULT_ALIGNMENT);
-        LL_ADC_SetSequencersScanMode(gpio->ADCx, LL_ADC_SEQ_SCAN_DISABLE);
+        LL_ADC_SetSequencersScanMode(gpio->adc_config->ADCx.ADCx, LL_ADC_SEQ_SCAN_DISABLE);
+        LL_ADC_REG_SetTriggerSource(gpio->adc_config->ADCx.ADCx, LL_ADC_REG_TRIG_SOFTWARE);
+        LL_ADC_REG_SetSequencerLength(gpio->adc_config->ADCx.ADCx, LL_ADC_REG_SEQ_SCAN_DISABLE);
+        LL_ADC_REG_SetSequencerDiscont(gpio->adc_config->ADCx.ADCx, LL_ADC_REG_SEQ_DISCONT_DISABLE);
+        LL_ADC_REG_SetContinuousMode(gpio->adc_config->ADCx.ADCx, LL_ADC_REG_CONV_SINGLE);
+        LL_ADC_REG_SetDMATransfer(gpio->adc_config->ADCx.ADCx, LL_ADC_REG_DMA_TRANSFER_NONE);
 
-        LL_ADC_REG_SetTriggerSource(gpio->ADCx, LL_ADC_REG_TRIG_SOFTWARE);
-        LL_ADC_REG_SetSequencerLength(gpio->ADCx, LL_ADC_REG_SEQ_SCAN_DISABLE);
-        LL_ADC_REG_SetSequencerDiscont(gpio->ADCx, LL_ADC_REG_SEQ_DISCONT_DISABLE);
-        LL_ADC_REG_SetContinuousMode(gpio->ADCx, LL_ADC_REG_CONV_SINGLE);
-        LL_ADC_REG_SetDMATransfer(gpio->ADCx, LL_ADC_REG_DMA_TRANSFER_NONE);
+        LL_ADC_REG_SetFlagEndOfConversion(gpio->adc_config->ADCx.ADCx, LL_ADC_REG_FLAG_EOC_UNITARY_CONV);
 
-        LL_ADC_REG_SetFlagEndOfConversion(gpio->ADCx, LL_ADC_REG_FLAG_EOC_UNITARY_CONV);
+        LL_ADC_SetCommonClock(__LL_ADC_COMMON_INSTANCE(gpio->adc_config->ADCx.ADCx), LL_ADC_CLOCK_SYNC_PCLK_DIV2);
+        LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(gpio->adc_config->ADCx.ADCx), LL_ADC_MULTI_INDEPENDENT);
 
-        LL_ADC_SetCommonClock(__LL_ADC_COMMON_INSTANCE(gpio->ADCx), LL_ADC_CLOCK_SYNC_PCLK_DIV2);
-        LL_ADC_SetMultimode(__LL_ADC_COMMON_INSTANCE(gpio->ADCx), LL_ADC_MULTI_INDEPENDENT);
-
-        LL_ADC_Enable(gpio->ADCx);
+        LL_ADC_Enable(gpio->adc_config->ADCx.ADCx);
+        /* Delay for ADC stabilization time */
+        /* Compute number of CPU cycles to wait for */
+        volatile uint32_t counter = (ADC_STAB_DELAY_US * (SystemCoreClock / 1000000U));
+        while(counter != 0U)
+        {
+            counter--;
+        }
     }
 
     return RTEMS_SUCCESSFUL;
@@ -274,18 +340,25 @@ rtems_status_code stm32f4_adc_read_raw(
 {
     uint32_t tickstart = 0U;
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    stm32f4_adc_select_channel(gpio);
-    LL_ADC_REG_StartConversionSWStart(gpio->ADCx);
-    while (!LL_ADC_IsActiveFlag_EOCS(gpio->ADCx)) {
+    rtems_status_code sc = stm32f4_adc_select_channel(gpio);
+    if (sc != RTEMS_SUCCESSFUL) {
+        return sc;
+    }
+    STM32F4_LOCK(&gpio->adc_config->ADCx);
+    STM32F4_LOCK(gpio->adc_config);
+    LL_ADC_REG_StartConversionSWStart(gpio->adc_config->ADCx.ADCx);
+    while (!LL_ADC_IsActiveFlag_EOCS(gpio->adc_config->ADCx.ADCx)) {
         if (timeout != RTEMS_ADC_NO_TIMEOUT) {
             if (timeout == 0U || ((HAL_GetTick() - tickstart) > timeout)) {
-                if (!LL_ADC_IsActiveFlag_EOCS(gpio->ADCx)) {
+                if (!LL_ADC_IsActiveFlag_EOCS(gpio->adc_config->ADCx.ADCx)) {
                     return RTEMS_TIMEOUT;
                 }
             }
         }
     }
-    *result = LL_ADC_REG_ReadConversionData32(gpio->ADCx);
+    *result = LL_ADC_REG_ReadConversionData32(gpio->adc_config->ADCx.ADCx);
+    STM32F4_UNLOCK(&gpio->adc_config->ADCx);
+    STM32F4_UNLOCK(gpio->adc_config);
     return RTEMS_SUCCESSFUL;
 }
 
@@ -294,13 +367,19 @@ rtems_status_code stm32f4_adc_start_read_raw_nb(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
-    if (adc_idx < NUM_ADC && adc_data[adc_idx].status == RTEMS_ADC_NOT_STARTED) {
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->adc_config->ADCx.ADCx) - 1;
+    if (adc_data[adc_idx].status == RTEMS_ADC_NOT_STARTED) {
         // start conversion here
-        LL_ADC_EnableIT_EOCS(gpio->ADCx);
-        stm32f4_adc_select_channel(gpio);
-        LL_ADC_REG_StartConversionSWStart(gpio->ADCx);
+        rtems_status_code sc = stm32f4_adc_select_channel(gpio);
+        if (sc != RTEMS_SUCCESSFUL) {
+            return sc;
+        }
+        STM32F4_LOCK(gpio->adc_config);
+        STM32F4_LOCK(&gpio->adc_config->ADCx);
+        LL_ADC_EnableIT_EOCS(gpio->adc_config->ADCx.ADCx);
+        LL_ADC_REG_StartConversionSWStart(gpio->adc_config->ADCx.ADCx);
         adc_data[adc_idx].status = RTEMS_ADC_NOT_READY;
+
         return RTEMS_SUCCESSFUL;
     }
     return RTEMS_UNSATISFIED;
@@ -312,11 +391,14 @@ rtems_adc_status stm32f4_adc_read_raw_nb(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->adc_config->ADCx.ADCx) - 1;
     rtems_adc_status ret = adc_data[adc_idx].status;
     if (ret == RTEMS_ADC_READY) {
         *result = adc_data[adc_idx].adc_value;
         adc_data[adc_idx].status = RTEMS_ADC_NOT_STARTED;
+        
+        STM32F4_UNLOCK(&gpio->adc_config->ADCx);
+        STM32F4_UNLOCK(gpio->adc_config);
     }
     return ret;
 }
@@ -327,29 +409,28 @@ rtems_status_code stm32f4_adc_set_resolution(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    uint32_t ll_res;
-    if (LL_ADC_IsEnabled(gpio->ADCx))
-        LL_ADC_Disable(gpio->ADCx);
-
-    switch (bits) {
-        case 12:
-            ll_res = LL_ADC_RESOLUTION_12B;
-            break;
-        case 10:
-            ll_res = LL_ADC_RESOLUTION_10B;
-            break;
-        case 8:
-            ll_res = LL_ADC_RESOLUTION_8B;
-            break;
-        case 6:
-            ll_res = LL_ADC_RESOLUTION_6B;
-            break;
-        default:
-            return RTEMS_UNSATISFIED;
+    if (!STM32F4_IS_LOCKED(gpio->adc_config)) {
+        STM32F4_LOCK(gpio->adc_config);
+        switch (bits) {
+            case 12:
+                gpio->adc_config->resolution = LL_ADC_RESOLUTION_12B;
+                break;
+            case 10:
+                gpio->adc_config->resolution = LL_ADC_RESOLUTION_10B;
+                break;
+            case 8:
+                gpio->adc_config->resolution = LL_ADC_RESOLUTION_8B;
+                break;
+            case 6:
+                gpio->adc_config->resolution = LL_ADC_RESOLUTION_6B;
+                break;
+            default:
+                return RTEMS_UNSATISFIED;
+        }
+        STM32F4_UNLOCK(gpio->adc_config);
+        return RTEMS_SUCCESSFUL;
     }
-    stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    LL_ADC_SetResolution(gpio->ADCx, ll_res);
-    return RTEMS_SUCCESSFUL;
+    return RTEMS_RESOURCE_IN_USE;
 }
 
 rtems_status_code stm32f4_adc_set_alignment(
@@ -357,20 +438,23 @@ rtems_status_code stm32f4_adc_set_alignment(
     rtems_adc_align align
 )
 {
-    uint32_t ll_align;
-    switch (align) {
-        case RTEMS_ADC_ALIGN_LEFT:
-            ll_align = LL_ADC_DATA_ALIGN_LEFT;
-            break;
-        case RTEMS_ADC_ALIGN_RIGHT:
-            ll_align = LL_ADC_DATA_ALIGN_RIGHT;
-            break;
-        default:
-            return RTEMS_UNSATISFIED;
-    }
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    LL_ADC_SetDataAlignment(gpio->ADCx, ll_align);
-    return RTEMS_SUCCESSFUL;
+    if (!STM32F4_IS_LOCKED(gpio->adc_config)) {
+        STM32F4_LOCK(gpio->adc_config);
+        switch (align) {
+            case RTEMS_ADC_ALIGN_LEFT:
+                gpio->adc_config->alignment = LL_ADC_DATA_ALIGN_LEFT;
+                break;
+            case RTEMS_ADC_ALIGN_RIGHT:
+                gpio->adc_config->alignment = LL_ADC_DATA_ALIGN_RIGHT;
+                break;
+            default:
+                return RTEMS_UNSATISFIED;
+        }
+        STM32F4_UNLOCK(gpio->adc_config);
+        return RTEMS_SUCCESSFUL;
+    }
+    return RTEMS_RESOURCE_IN_USE;
 }
 
 rtems_status_code stm32f4_adc_configure_interrupt(
@@ -380,7 +464,7 @@ rtems_status_code stm32f4_adc_configure_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->adc_config->ADCx.ADCx) - 1;
     if (!isr_registered[adc_idx]) {
         isr_table[adc_idx] = (stm32f4_interrupt){
             .arg = {
@@ -406,7 +490,7 @@ rtems_status_code stm32f4_adc_remove_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->adc_config->ADCx.ADCx) - 1;
     rtems_status_code sc = rtems_interrupt_handler_remove(
             ADC_IRQn,
             adc_irq_handler,
@@ -423,11 +507,14 @@ rtems_status_code stm32f4_adc_enable_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1]) {
-        LL_ADC_EnableIT_EOCS(gpio->ADCx);
-        return RTEMS_SUCCESSFUL;
+    if (!STM32F4_IS_LOCKED(&gpio->adc_config->ADCx)) {
+        if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->adc_config->ADCx.ADCx) - 1]) {
+            LL_ADC_EnableIT_EOCS(gpio->adc_config->ADCx.ADCx);
+            return RTEMS_SUCCESSFUL;
+        }
+        return RTEMS_UNSATISFIED;
     }
-    return RTEMS_UNSATISFIED;
+    return RTEMS_RESOURCE_IN_USE;
 }
 
 rtems_status_code stm32f4_adc_disable_interrupt(
@@ -435,11 +522,14 @@ rtems_status_code stm32f4_adc_disable_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1]) {
-        LL_ADC_DisableIT_EOCS(gpio->ADCx);
-        return RTEMS_SUCCESSFUL;
+    if (!STM32F4_IS_LOCKED(&gpio->adc_config->ADCx)) {
+        if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->adc_config->ADCx.ADCx) - 1]) {
+            LL_ADC_DisableIT_EOCS(gpio->adc_config->ADCx.ADCx);
+            return RTEMS_SUCCESSFUL;
+        }
+        return RTEMS_UNSATISFIED;
     }
-    return RTEMS_UNSATISFIED;
+    return RTEMS_RESOURCE_IN_USE;
 }
 
 void adc_irq_handler(void *arg) {
