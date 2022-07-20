@@ -55,13 +55,21 @@
 extern "C" {
 #endif /* __cplusplus */
 
+/**
+  * @brief Macro to initialize rtems_gpio.
+  *
+  * @param gpioh pointer to GPIO handlers
+  * @param adch pointer to ADC handlers
+  */
 #if BSP_ENABLE_ADC == 1
-#define RTEMS_GPIO_BUILD_BASE(gpioh, adch) \
-    (rtems_gpio) { .gpio_handlers = ( gpioh ), \
-                   .adc_handlers = ( adch ) };
+#define RTEMS_GPIO_BUILD_BASE(                                      \
+        _gpio_handlers, _is_adc_pin, _adc_handlers)                 \
+    (rtems_gpio) { .gpio_handlers = ( _gpio_handlers ),             \
+                   .is_adc_pin = ( _is_adc_pin ),                   \
+                   .adc_handlers = ( _adc_handlers ) };
 #else
-#define RTEMS_GPIO_BUILD_BASE(gpioh) \
-    (rtems_gpio) { .gpio_handlers = ( gpioh ) }
+#define RTEMS_GPIO_BUILD_BASE(_gpio_handlers)                       \
+    (rtems_gpio) { .gpio_handlers = ( _gpio_handlers )};
 #endif /* BSP_ENABLE_ADC */
 
 /**
@@ -233,6 +241,7 @@ struct rtems_gpio {
       */
     uint32_t virtual_pin;
 #if BSP_ENABLE_ADC == 1
+    bool is_adc_pin;
     /**
       * @brief This member is a pointer to a structure containing
       *        pointers to handlers of an ADC.
