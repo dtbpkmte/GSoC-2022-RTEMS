@@ -59,18 +59,9 @@ extern "C" {
   * @brief Macro to initialize rtems_gpio.
   *
   * @param gpioh pointer to GPIO handlers
-  * @param adch pointer to ADC handlers
   */
-#if BSP_ENABLE_ADC == 1
-#define RTEMS_GPIO_BUILD_BASE(                                      \
-        _gpio_handlers, _is_adc_pin, _adc_handlers)                 \
-    (rtems_gpio) { .gpio_handlers = ( _gpio_handlers ),             \
-                   .is_adc_pin = ( _is_adc_pin ),                   \
-                   .adc_handlers = ( _adc_handlers ) };
-#else
 #define RTEMS_GPIO_BUILD_BASE(_gpio_handlers)                       \
     (rtems_gpio) { .gpio_handlers = ( _gpio_handlers )};
-#endif /* BSP_ENABLE_ADC */
 
 /**
   * @name GPIO data structures
@@ -126,8 +117,6 @@ typedef struct rtems_gpio rtems_gpio;
   * @brief Typedef of the function pointer of an ISR.
   */
 typedef void (*rtems_gpio_isr)(void *);
-
-#include <bsp/adc.h>
 
 /**
   * @brief Structure containing pointers to handlers of a
@@ -240,22 +229,6 @@ struct rtems_gpio {
       *        0 (zero).
       */
     uint32_t virtual_pin;
-#if BSP_ENABLE_ADC == 1
-    bool is_adc_pin;
-    /**
-      * @brief This member is a pointer to a structure containing
-      *        pointers to handlers of an ADC.
-      */
-    const rtems_adc_handlers *adc_handlers;
-
-    /**
-      * @brief This member is a pointer to a transfer function
-      *        that will be assigned to this pin.
-      * If no transfer function assigned, it should remain NULL.
-      */
-    rtems_adc_tf tf;
-    void *tf_params;
-#endif /* BSP_ENABLE_GPIO */
 };
 
 /** @} */

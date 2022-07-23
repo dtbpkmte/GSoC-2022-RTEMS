@@ -209,7 +209,7 @@ rtems_status_code stm32f4_gpio_get(
     if (tmp == NULL) {
         return RTEMS_NO_MEMORY;
     }
-    tmp->base = RTEMS_GPIO_BUILD_BASE(&stm32f4_gpio_handlers, NULL);
+    tmp->base = RTEMS_GPIO_BUILD_BASE(&stm32f4_gpio_handlers);
     tmp->pin = STM32F4_GET_PIN_0_15(interm_pin);
     tmp->port = STM32F4_GET_PORT(interm_pin);
     

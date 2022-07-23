@@ -30,6 +30,7 @@
 
 #include <bsp.h>
 #include <rtems.h>
+#include <bsp/gpio2.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,13 +52,21 @@ typedef enum {
     RTEMS_ADC_NB_DMA
 } rtems_adc_nb_mode;
 
+/**
+  * @brief Enumeration of reference voltages.
+  */
+typedef enum {
+    RTEMS_ADC_REF_DEFAULT = 0,
+    RTEMS_ADC_REF_INTERNAL,
+    RTEMS_ADC_REF_EXTERNAL
+} rtems_adc_ref;
+
 #define RTEMS_ADC_NO_TIMEOUT   0xFFFFFFFFU
 
 typedef void (*rtems_adc_isr)(void *);
 typedef double (*rtems_adc_tf) (void *params, uint32_t raw_value);
 typedef struct rtems_adc_handlers rtems_adc_handlers;
-
-#include <bsp/gpio2.h>
+typedef struct rtems_adc rtems_adc;
 
 /**
   * @brief Structure containing pointers to ADC handlers of a BSP/driver.
@@ -125,6 +134,21 @@ struct rtems_adc_handlers {
       *        interrupt of a pin.
       */
     rtems_status_code (*disable_interrupt) (rtems_gpio *);
+};
+
+struct rtems_adc {
+    /**
+      * @brief This member is a pointer to a structure containing
+      *        pointers to handlers of an ADC.
+      */
+    const rtems_adc_handlers *adc_handlers;
+    /**
+      * @brief This member is a pointer to a transfer function
+      *        that will be assigned to this pin.
+      * If no transfer function assigned, it should remain NULL.
+      */
+    rtems_adc_tf tf;
+    void *tf_params;
 };
 
 /**
