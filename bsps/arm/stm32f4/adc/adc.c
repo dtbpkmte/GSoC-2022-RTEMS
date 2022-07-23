@@ -1,6 +1,3 @@
-#ifndef LIBBSP_ARM_STM32F4_BSP_ADC
-#define LIBBSP_ARM_STM32F4_BSP_ADC
-
 #include <bsp/stm32f4_adc.h>
 
 #if defined(ADC3)
@@ -22,7 +19,7 @@ typedef struct {
     rtems_gpio_isr isr;
 } stm32f4_interrupt;
 
-static void adc_irq_handler(void *arg);
+void adc_irq_handler(void *arg);
 
 static stm32f4_interrupt isr_table[NUM_ADC];
 
@@ -207,20 +204,25 @@ static void stm32f4_adc_select_channel(
     LL_ADC_SetChannelSamplingTime(gpio->ADCx, adc_channel, STM32F4_ADC_DEFAULT_SAMPLINGTIME);
 }
 
-rtems_status_code stm32f4_adc_start(
+void stm32f4_adc_start(
     void
 )
 {
     // Install ISR for non-blocking read
-    return rtems_interrupt_handler_install(
+    rtems_status_code sc = rtems_interrupt_handler_install(
             ADC_IRQn,
             NULL,
             RTEMS_INTERRUPT_SHARED,
             adc_irq_handler,
             NULL
     );
-    return RTEMS_SUCCESSFUL;
+    while (sc != RTEMS_SUCCESSFUL);
 }
+RTEMS_SYSINIT_ITEM(
+    stm32f4_adc_start,
+    RTEMS_SYSINIT_DEVICE_DRIVERS,
+    RTEMS_SYSINIT_ORDER_LAST
+);
 
 rtems_status_code stm32f4_adc_init(
     stm32f4_gpio *gpio
@@ -292,12 +294,13 @@ rtems_status_code stm32f4_adc_start_read_raw_nb(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
-    if (adc_data[adc_num].status == RTEMS_ADC_NOT_STARTED) {
-        adc_data[adc_num].status = RTEMS_ADC_NOT_READY;
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
+    if (adc_idx < NUM_ADC && adc_data[adc_idx].status == RTEMS_ADC_NOT_STARTED) {
         // start conversion here
         LL_ADC_EnableIT_EOCS(gpio->ADCx);
+        stm32f4_adc_select_channel(gpio);
         LL_ADC_REG_StartConversionSWStart(gpio->ADCx);
+        adc_data[adc_idx].status = RTEMS_ADC_NOT_READY;
         return RTEMS_SUCCESSFUL;
     }
     return RTEMS_UNSATISFIED;
@@ -309,11 +312,11 @@ rtems_adc_status stm32f4_adc_read_raw_nb(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
-    rtems_adc_status ret = adc_data[adc_num].status;
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
+    rtems_adc_status ret = adc_data[adc_idx].status;
     if (ret == RTEMS_ADC_READY) {
-        *result = adc_data[adc_num].adc_value;
-        adc_data[adc_num].status = RTEMS_ADC_NOT_STARTED;
+        *result = adc_data[adc_idx].adc_value;
+        adc_data[adc_idx].status = RTEMS_ADC_NOT_STARTED;
     }
     return ret;
 }
@@ -323,7 +326,11 @@ rtems_status_code stm32f4_adc_set_resolution(
     unsigned int bits
 )
 {
+    stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
     uint32_t ll_res;
+    if (LL_ADC_IsEnabled(gpio->ADCx))
+        LL_ADC_Disable(gpio->ADCx);
+
     switch (bits) {
         case 12:
             ll_res = LL_ADC_RESOLUTION_12B;
@@ -373,22 +380,22 @@ rtems_status_code stm32f4_adc_configure_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
-    if (!isr_registered[adc_num]) {
-        isr_table[adc_num] = (stm32f4_interrupt){
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
+    if (!isr_registered[adc_idx]) {
+        isr_table[adc_idx] = (stm32f4_interrupt){
             .arg = {
                 .arg = arg,
                 .gpio = gpio
             },
             .isr = isr
         };
-        isr_registered[adc_num] = true;
+        isr_registered[adc_idx] = true;
         return rtems_interrupt_handler_install(
                 ADC_IRQn,
                 NULL,
                 RTEMS_INTERRUPT_SHARED,
                 adc_irq_handler,
-                &isr_table[adc_num].arg
+                &isr_table[adc_idx].arg
         );
     }
     return RTEMS_UNSATISFIED;
@@ -399,14 +406,14 @@ rtems_status_code stm32f4_adc_remove_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    unsigned int adc_num = STM32F4_GET_ADC_NUMBER(gpio->ADCx);
+    unsigned int adc_idx = STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1;
     rtems_status_code sc = rtems_interrupt_handler_remove(
             ADC_IRQn,
             adc_irq_handler,
-            &isr_table[adc_num].arg
+            &isr_table[adc_idx].arg
     );
     if (sc == RTEMS_SUCCESSFUL) {
-        isr_registered[adc_num] = false;
+        isr_registered[adc_idx] = false;
     }
     return sc;
 }
@@ -416,7 +423,7 @@ rtems_status_code stm32f4_adc_enable_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx)]) {
+    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1]) {
         LL_ADC_EnableIT_EOCS(gpio->ADCx);
         return RTEMS_SUCCESSFUL;
     }
@@ -428,17 +435,19 @@ rtems_status_code stm32f4_adc_disable_interrupt(
 )
 {
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx)]) {
+    if (isr_registered[STM32F4_GET_ADC_NUMBER(gpio->ADCx) - 1]) {
         LL_ADC_DisableIT_EOCS(gpio->ADCx);
         return RTEMS_SUCCESSFUL;
     }
     return RTEMS_UNSATISFIED;
 }
 
-static void adc_irq_handler(void *arg) {
+void adc_irq_handler(void *arg) {
+    rtems_interrupt_level level;
+    rtems_interrupt_disable( level );
     unsigned int i;
     for (i = 0; i < NUM_ADC; ++i) {
-        ADC_TypeDef *adcx = STM32F4_GET_ADCx_FROM_NUMBER(i);
+        ADC_TypeDef *adcx = STM32F4_GET_ADCx_FROM_NUMBER(i+1);
         if (LL_ADC_IsActiveFlag_EOCS(adcx)) {
             // if the current IRQ has no ISR registered,
             // it means the IRQ happens from a non-blocking read
@@ -458,6 +467,6 @@ static void adc_irq_handler(void *arg) {
             break;
         }
     }
+    rtems_interrupt_enable( level );
 }
 
-#endif /* LIBBSP_ARM_STM32F4_BSP_ADC */
