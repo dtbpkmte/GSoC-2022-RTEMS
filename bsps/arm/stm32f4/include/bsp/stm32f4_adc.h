@@ -3,13 +3,77 @@
 
 #include <rtems/sysinit.h>
 #include <bsp/adc.h>
-#include <bsp/stm32f4_gpio.h>
 #include <stm32f4xx_ll_bus.h>
 #include <stm32f4xx_ll_adc.h>
 
-#define STM32F4_ADC_DEFAULT_RESOLUTION          10 //bits
-#define STM32F4_ADC_DEFAULT_ALIGNMENT           RTEMS_ADC_ALIGN_RIGHT
-#define STM32F4_ADC_DEFAULT_SAMPLINGTIME       LL_ADC_SAMPLINGTIME_3CYCLES
+#define STM32F4_ADC_DEFAULT_RESOLUTION          LL_ADC_RESOLUTION_10B
+#define STM32F4_ADC_DEFAULT_ALIGNMENT           LL_ADC_DATA_ALIGN_RIGHT
+#define STM32F4_ADC_DEFAULT_SAMPLINGTIME        LL_ADC_SAMPLINGTIME_3CYCLES
+
+/**
+  * Macros for simple locking of shared objects.
+  * Structs must have a bool member named "locked"
+  */
+#define STM32F4_LOCK(obj)               \
+    do {                                \
+        ( obj )->locked = true;         \
+    } while (0)
+
+#define STM32F4_UNLOCK(obj)             \
+    do {                                \
+        ( obj )->locked = false;        \
+    } while (0)
+
+#define STM32F4_IS_LOCKED(obj)          \
+    (( obj )->locked)
+
+/**
+  * @brief Wrapper of ADC_TypeDef with a simple lock.
+  */
+typedef struct {
+    ADC_TypeDef *ADCx;
+    bool locked;
+} ADC_TypeDef_Protected;
+
+/**
+  * @brief Structure containing ADC configuration for an
+  *        ADC pin.
+  */
+typedef struct {
+    /**
+      * @brief Locks ADC configuration change on this pin
+      *        if set to true.
+      */
+    bool locked;
+    /**
+      * @brief STM32F4-defined ADCx.
+      */
+    ADC_TypeDef_Protected ADCx;
+    /**
+      * @brief ADC channel of the pin.
+      * This can be LL_ADC_CHANNEL_n defined by STM32F4 LL
+      * driver, where 0 <= n <= 18. 
+      */
+    uint32_t channel;
+    /**
+      * @brief Resolution of the ADC pin.
+      * This can be one of the following values:
+      *     @ref LL_ADC_RESOLUTION_12B
+      *     @ref LL_ADC_RESOLUTION_10B
+      *     @ref LL_ADC_RESOLUTION_8B
+      *     @ref LL_ADC_RESOLUTION_6B
+      */
+    uint32_t resolution;
+    /**
+      * @brief Data alignment of the ADC pin.
+      * This can be one of the following values:
+      *     @ref LL_ADC_DATA_ALIGN_RIGHT
+      *     @ref LL_ADC_DATA_ALIGN_LEFT
+      */
+    uint32_t alignment;
+} stm32f4_adc_config;
+
+#include <bsp/stm32f4_gpio.h>
 
 const rtems_adc_handlers *stm32f4_get_adc_handlers(
     void
@@ -39,6 +103,15 @@ rtems_status_code stm32f4_get_LL_ADC_CHANNEL(
 bool stm32f4_is_adc_pin(
     stm32f4_gpio *gpio
 );
+
+rtems_status_code stm32f4_adc_get(
+    stm32f4_gpio *gpio
+);
+
+rtems_status_code stm32f4_adc_destroy(
+    stm32f4_gpio *gpio
+);
+
 /***/
 /**
   * @brief Perform initialization for STM32F4 ADC manager
