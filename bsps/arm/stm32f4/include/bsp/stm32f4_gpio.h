@@ -54,6 +54,173 @@ typedef struct {
 } stm32f4_gpio;
 
 /**
+  * @brief Initializes clock for the GPIO port
+  *        owning this pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL if the port argument is
+  *         valid
+  * @retval RTEMS_UNSATISFIED if the port argument is
+  *         invalid
+  */
+extern rtems_status_code stm32f4_gpio_init(
+    rtems_gpio *base
+);
+
+/**
+  * @brief Does nothing.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  * 
+  * @retval RTEMS_NOT_IMPLEMENTED
+  */
+extern rtems_status_code stm32f4_gpio_deinit(
+    rtems_gpio *base
+);
+
+/**
+  * @brief Sets the pin mode.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  * @param mode is a value of @see rtems_gpio_pin_mode
+  *
+  * @retval RTEMS_SUCCESSFUL if the pin mode is valid.
+  * @retval RTEMS_UNSATISFIED if the pin mode is 
+  *         invalid.
+  */
+extern rtems_status_code stm32f4_gpio_set_pin_mode(
+    rtems_gpio *base,
+    rtems_gpio_pin_mode mode
+);
+
+/**
+  * @brief Sets pull resistor mode.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  * @param pull is a value of @see rtems_gpio_pull
+  *
+  * @retval RTEMS_SUCCESSFUL if the pull resistor 
+  *         mode is valid.
+  * @retval RTEMS_UNSATISFIED if the pull resistor
+  *         mode is invalid.
+  */
+extern rtems_status_code stm32f4_gpio_set_pull(
+    rtems_gpio *base,
+    rtems_gpio_pull pull
+);
+
+/**
+  * @brief Configures user-defined ISR for an EXTI.
+  *
+  * This function is used to register a custom ISR
+  * with a GPIO pin. This API supports up to 1 ISR
+  * for each EXTI line (total 16 ISRs) at a time.
+  * 
+  * @note If there is already an ISR registered with 
+  *       a line, it needs to be removed to be able
+  *       to register a new one.
+  * @note This function does not enable interrupt.
+  *       use @see rtems_gpio_enable_interrupt().
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL if interrupt 
+  *         configuration is successful.
+  * @retval RTEMS_UNSATISFIED if trigger mode/pull
+  *         resistor mode is invalid or an ISR
+  *         has already been registered for this 
+  *         EXTI line.
+  * @retval @see rtems_interrupt_handler_install()
+  */
+extern rtems_status_code stm32f4_gpio_configure_interrupt(
+    rtems_gpio *base, 
+    rtems_gpio_isr isr,
+    void *arg,
+    rtems_gpio_interrupt_trig trig,
+    rtems_gpio_pull pull
+);
+
+/**
+  * @brief Removes the registered ISR.
+  *
+  * @note This function does not disable interrupt.
+  * @ref rtems_gpio_disable_interrupt()
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL if ISR removed successfully.
+  * @retval RTEMS_UNSATISFIED if no ISR registered for 
+  *         selected line.
+  * @retval @see rtems_interrupt_handler_remove()
+  */
+extern rtems_status_code stm32f4_gpio_remove_interrupt(
+    rtems_gpio *base
+);
+
+/**
+  * @brief Enables EXTI for the line connected to this
+  *        pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL
+  */
+extern rtems_status_code stm32f4_gpio_enable_interrupt(
+    rtems_gpio *base
+);
+
+/**
+  * @brief Disables EXTI for the line connected to 
+  *        this pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL
+  */
+extern rtems_status_code stm32f4_gpio_disable_interrupt(
+    rtems_gpio *base
+);
+
+/**
+  * @brief Reads digital value into a variable.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  * @param[out] value The pointer to the output
+  *             variable.
+  *
+  * @retval RTEMS_SUCCESSFUL
+  */
+extern rtems_status_code stm32f4_gpio_read(
+    rtems_gpio *base,
+    rtems_gpio_pin_state *value
+);
+
+/**
+  * @brief Writes digital value to a pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  * @param value The output digital value.
+  *
+  * @retval RTEMS_SUCCESSFUL
+  */
+extern rtems_status_code stm32f4_gpio_write(
+    rtems_gpio *base,
+    rtems_gpio_pin_state value
+);
+
+/**
+  * @brief Toggles the state of a pin.
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL
+  */
+extern rtems_status_code stm32f4_gpio_toggle(
+    rtems_gpio *base
+);
+
+/**
   * @brief Lock configuration of a pin.
   *
   * @param[in] base The pointer to the GPIO object.

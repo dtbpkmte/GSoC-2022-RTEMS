@@ -54,58 +54,6 @@ static rtems_status_code stm32f4_gpio_destroy(
     rtems_gpio *base
 );
 
-static rtems_status_code stm32f4_gpio_init(
-    rtems_gpio *base
-);
-
-static rtems_status_code stm32f4_gpio_deinit(
-    rtems_gpio *base
-);
-
-static rtems_status_code stm32f4_gpio_set_pin_mode(
-    rtems_gpio *base,
-    rtems_gpio_pin_mode mode
-);
-
-static rtems_status_code stm32f4_gpio_set_pull(
-    rtems_gpio *base,
-    rtems_gpio_pull pull
-);
-
-static rtems_status_code stm32f4_gpio_configure_interrupt(
-    rtems_gpio *base, 
-    rtems_gpio_isr isr,
-    void *arg,
-    rtems_gpio_interrupt_trig trig,
-    rtems_gpio_pull pull
-);
-
-static rtems_status_code stm32f4_gpio_remove_interrupt(
-    rtems_gpio *base
-);
-
-static rtems_status_code stm32f4_gpio_enable_interrupt(
-    rtems_gpio *base
-);
-
-static rtems_status_code stm32f4_gpio_disable_interrupt(
-    rtems_gpio *base
-);
-
-static rtems_status_code stm32f4_gpio_read(
-    rtems_gpio *base,
-    rtems_gpio_pin_state *value
-);
-
-static rtems_status_code stm32f4_gpio_write(
-    rtems_gpio *base,
-    rtems_gpio_pin_state value
-);
-
-static rtems_status_code stm32f4_gpio_toggle(
-    rtems_gpio *base
-);
-
 /*********************************************************/
 
 /**
@@ -126,11 +74,39 @@ static const rtems_gpio_handlers stm32f4_gpio_handlers = {
 };
 
 static GPIO_TypeDef * const GPIOx[] = {
-    GPIOA, GPIOB, GPIOC, GPIOD, GPIOE,
-    GPIOF, GPIOG, GPIOH, GPIOI,
-#ifdef STM32F429X
-    GPIOJ, GPIOK
-#endif /* STM32F429X */
+#ifdef GPIOA_BASE
+    GPIOA
+#endif /* GPIOA_BASE */
+#ifdef GPIOB_BASE
+    , GPIOB
+#endif /* GPIOB_BASE */
+#ifdef GPIOC_BASE
+    , GPIOC
+#endif /* GPIOC_BASE */
+#ifdef GPIOD_BASE
+    , GPIOD
+#endif /* GPIOD_BASE */
+#ifdef GPIOE_BASE
+    , GPIOE
+#endif /* GPIOE_BASE */
+#ifdef GPIOF_BASE
+    , GPIOF
+#endif /* GPIOF_BASE */
+#ifdef GPIOG_BASE
+    , GPIOG
+#endif /* GPIOG_BASE */
+#ifdef GPIOH_BASE
+    , GPIOH
+#endif /* GPIOH_BASE */
+#ifdef GPIOI_BASE
+    , GPIOI
+#endif /* GPIOI_BASE */
+#ifdef GPIOJ_BASE
+    , GPIOJ
+#endif /* GPIOJ_BASE */
+#ifdef GPIOK_BASE
+    , GPIOK
+#endif /* GPIOK_BASE */
 };
 
 static unsigned int const EXTIx_IRQn[] = {
@@ -206,6 +182,7 @@ typedef struct {
 } stm32f4_interrupt;
 
 static stm32f4_interrupt isr_table[16]; 
+static bool isr_registered[16] = {0};
 
 void exti_handler(void *arg);
 
@@ -253,41 +230,61 @@ rtems_status_code stm32f4_gpio_init(rtems_gpio *base) {
     stm32f4_gpio *gpio = get_gpio_from_base(base);
     
     switch ((uintptr_t) gpio->port) {
+#ifdef GPIOA_BASE
         case (uintptr_t) GPIOA:
             __HAL_RCC_GPIOA_CLK_ENABLE();
             break;
+#endif /* GPIOA_BASE */
+#ifdef GPIOB_BASE
         case (uintptr_t) GPIOB:
             __HAL_RCC_GPIOB_CLK_ENABLE();
             break;
+#endif /* GPIOB_BASE */
+#ifdef GPIOC_BASE
         case (uintptr_t) GPIOC:
             __HAL_RCC_GPIOC_CLK_ENABLE();
             break;
+#endif /* GPIOC_BASE */
+#ifdef GPIOD_BASE
         case (uintptr_t) GPIOD:
             __HAL_RCC_GPIOD_CLK_ENABLE();
             break;
+#endif /* GPIOD_BASE */
+#ifdef GPIOE_BASE
         case (uintptr_t) GPIOE:
             __HAL_RCC_GPIOE_CLK_ENABLE();
             break;
+#endif /* GPIOE_BASE */
+#ifdef GPIOF_BASE
         case (uintptr_t) GPIOF:
             __HAL_RCC_GPIOF_CLK_ENABLE();
             break;
+#endif /* GPIOF_BASE */
+#ifdef GPIOG_BASE
         case (uintptr_t) GPIOG:
             __HAL_RCC_GPIOG_CLK_ENABLE();
             break;
+#endif /* GPIOG_BASE */
+#ifdef GPIOH_BASE
         case (uintptr_t) GPIOH:
             __HAL_RCC_GPIOH_CLK_ENABLE();
             break;
+#endif /* GPIOH_BASE */
+#ifdef GPIOI_BASE
         case (uintptr_t) GPIOI:
             __HAL_RCC_GPIOI_CLK_ENABLE();
             break;
-#ifdef STM32F429X
+#endif /* GPIOI_BASE */
+#ifdef GPIOJ_BASE
         case (uintptr_t) GPIOJ:
             __HAL_RCC_GPIOJ_CLK_ENABLE();
             break;
+#endif /* GPIOJ_BASE */
+#ifdef GPIOK_BASE
         case (uintptr_t) GPIOK:
             __HAL_RCC_GPIOK_CLK_ENABLE();
             break;
-#endif /* STM32F429X */
+#endif /* GPIOK_BASE */
         default:
             return RTEMS_UNSATISFIED;
     }
@@ -295,50 +292,6 @@ rtems_status_code stm32f4_gpio_init(rtems_gpio *base) {
 }
 
 rtems_status_code stm32f4_gpio_deinit(rtems_gpio *base) {
-/*
-    stm32f4_gpio *gpio = get_gpio_from_base(base);
-    
-    switch ((uintptr_t) gpio->port) {
-        case (uintptr_t) GPIOA:
-            __HAL_RCC_GPIOA_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOB:
-            __HAL_RCC_GPIOB_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOC:
-            __HAL_RCC_GPIOC_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOD:
-            __HAL_RCC_GPIOD_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOE:
-            __HAL_RCC_GPIOE_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOF:
-            __HAL_RCC_GPIOF_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOG:
-            __HAL_RCC_GPIOG_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOH:
-            __HAL_RCC_GPIOH_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOI:
-            __HAL_RCC_GPIOI_CLK_DISABLE();
-            break;
-#ifdef STM32F429X
-        case (uintptr_t) GPIOJ:
-            __HAL_RCC_GPIOJ_CLK_DISABLE();
-            break;
-        case (uintptr_t) GPIOK:
-            __HAL_RCC_GPIOK_CLK_DISABLE();
-            break;
-#endif 
-        default:
-            return RTEMS_UNSATISFIED;
-    }
-    return RTEMS_SUCCESSFUL;
-*/
     return RTEMS_NOT_IMPLEMENTED;
 }
 
@@ -455,6 +408,9 @@ rtems_status_code stm32f4_gpio_configure_interrupt(
     HAL_GPIO_Init(gpio->port, &hal_conf);
 
     // RTEMS interrupt config
+    if (isr_registered[gpio->pin]) {
+        return RTEMS_UNSATISFIED;
+    }
     isr_table[gpio->pin] = (stm32f4_interrupt){
         .arg = {
             .arg = arg,
@@ -462,6 +418,7 @@ rtems_status_code stm32f4_gpio_configure_interrupt(
         },
         .isr = isr
     };
+    isr_registered[gpio->pin] = true;
     rtems_option opt = gpio->pin < 5 ? 
                         RTEMS_INTERRUPT_UNIQUE : 
                         RTEMS_INTERRUPT_SHARED;
@@ -481,15 +438,18 @@ rtems_status_code stm32f4_gpio_remove_interrupt(
 )
 {
     stm32f4_gpio *gpio = get_gpio_from_base(base);
-    rtems_status_code sc = rtems_interrupt_handler_remove(
-            STM32F4_GET_EXTI_IRQn(gpio->pin), 
-            exti_handler, 
-            &isr_table[gpio->pin].arg
-    );
-    if (sc == RTEMS_SUCCESSFUL) {
-        isr_table[gpio->pin] = (stm32f4_interrupt){0};
+    if (isr_registered[gpio->pin]) {
+        rtems_status_code sc = rtems_interrupt_handler_remove(
+                STM32F4_GET_EXTI_IRQn(gpio->pin), 
+                exti_handler, 
+                &isr_table[gpio->pin].arg
+        );
+        if (sc == RTEMS_SUCCESSFUL) {
+            isr_registered[gpio->pin] = false;
+        }
+        return sc;
     }
-    return sc;
+    return RTEMS_UNSATISFIED;
 }
 
 rtems_status_code stm32f4_gpio_enable_interrupt(
