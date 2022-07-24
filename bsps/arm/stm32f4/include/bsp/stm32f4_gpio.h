@@ -34,6 +34,20 @@
 #include <stm32f4xx_ll_exti.h>
 #include <bsp/gpio2.h>
 
+/*********** Helpers *****************/
+/**
+  * @brief Macro to get stm32f4_gpio object from a base rtems_gpio
+  *        object.
+  * 
+  * This is a wrapper of RTEMS_CONTAINER_OF macro
+  *
+  * @param base The pointer to a rtems_gpio object
+  * @retval The pointer to the stm32f4_gpio object owning
+  *         the specified rtems_gpio object
+  */
+#define stm32f4_get_gpio_from_base(_base) \
+    RTEMS_CONTAINER_OF(_base, stm32f4_gpio, base)
+
 /**
   * @brief STM32F4 BSP GPIO structure
   *
@@ -54,30 +68,17 @@ typedef struct {
 } stm32f4_gpio;
 
 /**
-  * @brief Initializes clock for the GPIO port
-  *        owning this pin.
+  * @name STM32F4 GPIO functions
   *
-  * @param[in] base The pointer to the GPIO object.
-  *
-  * @retval RTEMS_SUCCESSFUL if the port argument is
-  *         valid
-  * @retval RTEMS_UNSATISFIED if the port argument is
-  *         invalid
+  * @{
   */
-extern rtems_status_code stm32f4_gpio_init(
-    rtems_gpio *base
-);
 
 /**
-  * @brief Does nothing.
+  * @name GPIO API implementation of STM32F4 BSP
   *
-  * @param[in] base The pointer to the GPIO object.
-  * 
-  * @retval RTEMS_NOT_IMPLEMENTED
+  * @{
   */
-extern rtems_status_code stm32f4_gpio_deinit(
-    rtems_gpio *base
-);
+
 
 /**
   * @brief Sets the pin mode.
@@ -220,6 +221,31 @@ extern rtems_status_code stm32f4_gpio_toggle(
     rtems_gpio *base
 );
 
+/** @} */
+
+/**
+  * @name Extra functionality of STM32F4 GPIO
+  *
+  * @{
+  */
+
+/**
+  * @brief Initializes clock for the GPIO port
+  *        owning this pin.
+  *
+  * @note This function is called in stm32f4_gpio_get().
+  *
+  * @param[in] base The pointer to the GPIO object.
+  *
+  * @retval RTEMS_SUCCESSFUL if the port argument is
+  *         valid
+  * @retval RTEMS_UNSATISFIED if the port argument is
+  *         invalid
+  */
+extern rtems_status_code stm32f4_gpio_init(
+    rtems_gpio *base
+);
+
 /**
   * @brief Lock configuration of a pin.
   *
@@ -239,5 +265,9 @@ extern void stm32f4_gpio_set_af(
     rtems_gpio *base,
     uint32_t alternate
 );
+
+/** @} */
+
+/** @} */
 
 #endif /* LIBBSP_ARM_STM32F4_BSP_GPIO */

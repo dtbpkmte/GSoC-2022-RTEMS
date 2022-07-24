@@ -27,22 +27,9 @@
 
 #include <bsp.h>
 #include <rtems.h>
-#include <bsp/stm32f4_gpio.h>
 #include <stdlib.h>
-
-/*********** Helpers *****************/
-/**
-  * @brief Macro to get stm32f4_gpio object from a base rtems_gpio
-  *        object.
-  *
-  * This is a wrapper of RTEMS_CONTAINER_OF macro
-  *
-  * @param base The pointer to a rtems_gpio object
-  * @retval The pointer to the stm32f4_gpio object owning
-  *         the specified rtems_gpio object
-  */
-#define get_gpio_from_base(base) \
-    RTEMS_CONTAINER_OF(base, stm32f4_gpio, base)
+#include <bsp/stm32f4_gpio.h>
+#include <bsp/stm32f4_periph.h>
 
 /*********** GPIO API ***************/
 static rtems_status_code stm32f4_gpio_get(
@@ -60,8 +47,6 @@ static rtems_status_code stm32f4_gpio_destroy(
   * @brief STM32F4 GPIO handlers
   */
 static const rtems_gpio_handlers stm32f4_gpio_handlers = {
-    .init = stm32f4_gpio_init,
-    .deinit = stm32f4_gpio_deinit,
     .set_pin_mode = stm32f4_gpio_set_pin_mode,
     .set_pull = stm32f4_gpio_set_pull,
     .configure_interrupt = stm32f4_gpio_configure_interrupt,
@@ -196,6 +181,8 @@ rtems_status_code bsp_gpio_register_controllers(
     return rtems_gpio_register(
             stm32f4_gpio_get,
             stm32f4_gpio_destroy,
+            stm32f4_periph_get_api,
+            stm32f4_periph_remove_api,
             sizeof(GPIOx)/sizeof(GPIOx[0])*16
     );
 }
@@ -213,6 +200,9 @@ rtems_status_code stm32f4_gpio_get(
     tmp->pin = STM32F4_GET_PIN_0_15(interm_pin);
     tmp->port = STM32F4_GET_PORT(interm_pin);
     
+    // initialize the pin
+    stm32f4_gpio_init((rtems_gpio *) tmp);
+
     *out = (rtems_gpio *) tmp;
     return RTEMS_SUCCESSFUL;
 }
@@ -224,75 +214,6 @@ rtems_status_code stm32f4_gpio_destroy(
     stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
     free(gpio);
     return RTEMS_SUCCESSFUL;
-}
-
-rtems_status_code stm32f4_gpio_init(rtems_gpio *base) {
-    stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
-    
-    switch ((uintptr_t) gpio->port) {
-#ifdef GPIOA_BASE
-        case (uintptr_t) GPIOA:
-            __HAL_RCC_GPIOA_CLK_ENABLE();
-            break;
-#endif /* GPIOA_BASE */
-#ifdef GPIOB_BASE
-        case (uintptr_t) GPIOB:
-            __HAL_RCC_GPIOB_CLK_ENABLE();
-            break;
-#endif /* GPIOB_BASE */
-#ifdef GPIOC_BASE
-        case (uintptr_t) GPIOC:
-            __HAL_RCC_GPIOC_CLK_ENABLE();
-            break;
-#endif /* GPIOC_BASE */
-#ifdef GPIOD_BASE
-        case (uintptr_t) GPIOD:
-            __HAL_RCC_GPIOD_CLK_ENABLE();
-            break;
-#endif /* GPIOD_BASE */
-#ifdef GPIOE_BASE
-        case (uintptr_t) GPIOE:
-            __HAL_RCC_GPIOE_CLK_ENABLE();
-            break;
-#endif /* GPIOE_BASE */
-#ifdef GPIOF_BASE
-        case (uintptr_t) GPIOF:
-            __HAL_RCC_GPIOF_CLK_ENABLE();
-            break;
-#endif /* GPIOF_BASE */
-#ifdef GPIOG_BASE
-        case (uintptr_t) GPIOG:
-            __HAL_RCC_GPIOG_CLK_ENABLE();
-            break;
-#endif /* GPIOG_BASE */
-#ifdef GPIOH_BASE
-        case (uintptr_t) GPIOH:
-            __HAL_RCC_GPIOH_CLK_ENABLE();
-            break;
-#endif /* GPIOH_BASE */
-#ifdef GPIOI_BASE
-        case (uintptr_t) GPIOI:
-            __HAL_RCC_GPIOI_CLK_ENABLE();
-            break;
-#endif /* GPIOI_BASE */
-#ifdef GPIOJ_BASE
-        case (uintptr_t) GPIOJ:
-            __HAL_RCC_GPIOJ_CLK_ENABLE();
-            break;
-#endif /* GPIOJ_BASE */
-#ifdef GPIOK_BASE
-        case (uintptr_t) GPIOK:
-            __HAL_RCC_GPIOK_CLK_ENABLE();
-            break;
-#endif /* GPIOK_BASE */
-        default:
-            return RTEMS_UNSATISFIED;
-    }
-    return RTEMS_SUCCESSFUL;
-}
-
-rtems_status_code stm32f4_gpio_deinit(rtems_gpio *base) {
-    return RTEMS_NOT_IMPLEMENTED;
 }
 
 rtems_status_code stm32f4_gpio_set_pin_mode(
@@ -437,7 +358,7 @@ rtems_status_code stm32f4_gpio_remove_interrupt(
     rtems_gpio *base
 )
 {
-    stm32f4_gpio *gpio = get_gpio_from_base(base);
+    stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
     if (isr_registered[gpio->pin]) {
         rtems_status_code sc = rtems_interrupt_handler_remove(
                 STM32F4_GET_EXTI_IRQn(gpio->pin), 
@@ -523,6 +444,71 @@ void exti_handler(void *arg) {
 }
 
 /************ STM32F4 Other specific GPIO functions ************/
+rtems_status_code stm32f4_gpio_init(rtems_gpio *base) {
+    stm32f4_gpio *gpio = stm32f4_get_gpio_from_base(base);
+    
+    switch ((uintptr_t) gpio->port) {
+#ifdef GPIOA_BASE
+        case (uintptr_t) GPIOA:
+            __HAL_RCC_GPIOA_CLK_ENABLE();
+            break;
+#endif /* GPIOA_BASE */
+#ifdef GPIOB_BASE
+        case (uintptr_t) GPIOB:
+            __HAL_RCC_GPIOB_CLK_ENABLE();
+            break;
+#endif /* GPIOB_BASE */
+#ifdef GPIOC_BASE
+        case (uintptr_t) GPIOC:
+            __HAL_RCC_GPIOC_CLK_ENABLE();
+            break;
+#endif /* GPIOC_BASE */
+#ifdef GPIOD_BASE
+        case (uintptr_t) GPIOD:
+            __HAL_RCC_GPIOD_CLK_ENABLE();
+            break;
+#endif /* GPIOD_BASE */
+#ifdef GPIOE_BASE
+        case (uintptr_t) GPIOE:
+            __HAL_RCC_GPIOE_CLK_ENABLE();
+            break;
+#endif /* GPIOE_BASE */
+#ifdef GPIOF_BASE
+        case (uintptr_t) GPIOF:
+            __HAL_RCC_GPIOF_CLK_ENABLE();
+            break;
+#endif /* GPIOF_BASE */
+#ifdef GPIOG_BASE
+        case (uintptr_t) GPIOG:
+            __HAL_RCC_GPIOG_CLK_ENABLE();
+            break;
+#endif /* GPIOG_BASE */
+#ifdef GPIOH_BASE
+        case (uintptr_t) GPIOH:
+            __HAL_RCC_GPIOH_CLK_ENABLE();
+            break;
+#endif /* GPIOH_BASE */
+#ifdef GPIOI_BASE
+        case (uintptr_t) GPIOI:
+            __HAL_RCC_GPIOI_CLK_ENABLE();
+            break;
+#endif /* GPIOI_BASE */
+#ifdef GPIOJ_BASE
+        case (uintptr_t) GPIOJ:
+            __HAL_RCC_GPIOJ_CLK_ENABLE();
+            break;
+#endif /* GPIOJ_BASE */
+#ifdef GPIOK_BASE
+        case (uintptr_t) GPIOK:
+            __HAL_RCC_GPIOK_CLK_ENABLE();
+            break;
+#endif /* GPIOK_BASE */
+        default:
+            return RTEMS_UNSATISFIED;
+    }
+    return RTEMS_SUCCESSFUL;
+}
+
 void stm32f4_gpio_lock_pin(
     rtems_gpio *base
 )
