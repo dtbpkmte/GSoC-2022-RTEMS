@@ -55,9 +55,29 @@ static uint32_t pin_map[CONFIGURE_GPIO_MAXIMUM_CONTROLLERS+1] = {0};
   */
 static uint32_t num_ctrl = 0;
 
+static uint32_t get_ctrl_index(
+    uint32_t virtual_pin
+);
+
+static uint32_t get_ctrl_index(
+    uint32_t virtual_pin
+)
+{
+    uint32_t i;
+    // TODO: binary search
+    for (i = 1; i <= num_ctrl; ++i) {
+        if (virtual_pin < pin_map[i]) {
+            break;
+        }
+    }
+    return i-1;
+}
+
 rtems_status_code rtems_gpio_register(
     rtems_status_code (*get_gpio)(uint32_t, rtems_gpio **),
     rtems_status_code (*destroy_gpio)(rtems_gpio *),
+    rtems_periph_api *(*get_api)(rtems_gpio *, rtems_periph_api_type),
+    rtems_status_code (*remove_api)(rtems_gpio *),
     uint32_t pin_count
 ) 
 {
@@ -69,6 +89,9 @@ rtems_status_code rtems_gpio_register(
 //    rtems_interrupt_disable(level);
     get_gpio_table[num_ctrl] = get_gpio;
     destroy_gpio_table[num_ctrl] = destroy_gpio;
+
+    rtems_periph_api_register_api(get_api, remove_api, num_ctrl);
+
     pin_map[num_ctrl+1] = pin_map[num_ctrl] + pin_count;
     ++num_ctrl;
 //    rtems_interrupt_enable(level);
@@ -81,18 +104,12 @@ rtems_status_code rtems_gpio_get(
     rtems_gpio **out
 ) 
 {
-    uint32_t i, pin;
-    // TODO: binary search
-    for (i = 1; i <= num_ctrl; ++i) {
-        if (virt_pin < pin_map[i]) {
-            pin = virt_pin - pin_map[i-1];
-            break;
-        }
-    }
-    if (i > num_ctrl)
+    uint32_t i = get_ctrl_index(virt_pin);
+    if (i >= num_ctrl)
         return RTEMS_UNSATISFIED;
 
-    rtems_status_code sc = (*get_gpio_table[i-1])(pin, out);
+    uint32_t pin = virt_pin - pin_map[i];
+    rtems_status_code sc = (*get_gpio_table[i])(pin, out);
     if (sc == RTEMS_SUCCESSFUL) {
         (*out)->virtual_pin = virt_pin;
     }
@@ -103,29 +120,24 @@ rtems_status_code rtems_gpio_destroy(
     rtems_gpio *base
 )
 {
-    uint32_t i;
-    // TODO: binary search
-    for (i = 1; i <= num_ctrl; ++i) {
-        if (base->virtual_pin < pin_map[i]) {
-            return (*destroy_gpio_table[i-1])(base);
-        }
-    }
-    return RTEMS_UNSATISFIED;
+    uint32_t i = get_ctrl_index(base->virtual_pin);
+    if (i >= num_ctrl)
+        return RTEMS_UNSATISFIED;
+    return (*destroy_gpio_table[i])(base);
 }
 
-rtems_status_code rtems_gpio_init(
-    rtems_gpio *base
+void rtems_gpio_start(
+    void
 )
 {
-    return base->gpio_handlers->init(base);
+    rtems_periph_api_start(get_ctrl_index, &num_ctrl);
+    bsp_gpio_register_controllers();
 }
-
-rtems_status_code rtems_gpio_deinit(
-    rtems_gpio *base
-)
-{
-    return base->gpio_handlers->deinit(base);
-}
+RTEMS_SYSINIT_ITEM(
+    rtems_gpio_start,
+    RTEMS_SYSINIT_DEVICE_DRIVERS,
+    RTEMS_SYSINIT_ORDER_LAST_BUT_1
+);
 
 rtems_status_code rtems_gpio_set_pin_mode(
     rtems_gpio *base, 

@@ -60,8 +60,11 @@ extern "C" {
   *
   * @param gpioh pointer to GPIO handlers
   */
-#define RTEMS_GPIO_BUILD_BASE(_gpio_handlers)                       \
-    (rtems_gpio) { .gpio_handlers = ( _gpio_handlers )};
+#define RTEMS_GPIO_BUILD_BASE(_gpio_handlers)                   \
+    (rtems_gpio) { .virtual_pin = 0,                            \
+                   .gpio_handlers = ( _gpio_handlers ),         \
+                   .api = NULL                                  \
+    };
 
 /**
   * @name GPIO data structures
@@ -118,6 +121,8 @@ typedef struct rtems_gpio rtems_gpio;
   */
 typedef void (*rtems_gpio_isr)(void *);
 
+#include <bsp/periph_api.h>
+
 /**
   * @brief Structure containing pointers to handlers of a
   *        BSP/driver. Each BSP/driver must define its own 
@@ -125,21 +130,6 @@ typedef void (*rtems_gpio_isr)(void *);
   *        with pointers to those handlers.
   */
 struct rtems_gpio_handlers {
-    /**
-      * @brief This member is the pointer to an initialize handler. 
-      *
-      * This handler could be used to perform some set up steps for
-      * a GPIO object (which means a pin or a port).
-      */
-    rtems_status_code (*init)(rtems_gpio *);
-
-    /**
-      * @brief This member is the pointer to a deinitialize handler. 
-      *
-      * This handler could be used to deinitialize a GPIO object.
-      */
-    rtems_status_code (*deinit)(rtems_gpio *);
-
     /**
       * @brief This member is the pointer to a handler for setting 
       *        pin mode. 
@@ -220,16 +210,71 @@ struct rtems_gpio_handlers {
   */
 struct rtems_gpio {
     /**
+      * @brief This member is a virtual pin number, counting from
+      *        0 (zero).
+      */
+    uint32_t virtual_pin;
+    /**
       * @brief This member is a pointer to a structure containing
       *        pointers to handlers of a GPIO controller.
       */
     const rtems_gpio_handlers *gpio_handlers;
     /**
-      * @brief This member is a virtual pin number, counting from
-      *        0 (zero).
+      * @brief This member is a pointer to a peripheral API.
       */
-    uint32_t virtual_pin;
+    rtems_periph_api *api;
 };
+
+/** @} */
+
+/**
+  * @name GPIO System operations
+  *
+  * Functions in this group should not be called by user
+  * applications. They are used by BSP/drivers only.
+  *
+  * @{
+  */
+
+/**
+  * @brief Perform initialization for GPIO system and 
+  *        Peripheral API system.
+  * This function is called automatically using 
+  * SYSINIT.
+  */
+extern void rtems_gpio_start(
+    void
+);
+
+/**
+  * @brief Registers a GPIO controller with GPIO manager.
+  *
+  * This function registers the pointer to BSP/driver-specific
+  * get_gpio() and destroy_gpio() functions. Those two functions
+  * are for creating and destroying GPIO objects. It also takes 
+  * the number of pins of each BSP/driver for mapping into a
+  * flat pin numbering system (virtual pin number).
+  * This function also help register peripherals API get()
+  * and remove() functions.
+  *
+  * @param get_gpio The pointer to BSP/driver-specific get_gpio()
+  * @param destroy_gpio The pointer to BSP/driver-specific 
+  *        destroy_gpio()
+  * @param get_api The pointer to BSP/driver-specific get_api()
+  * @param remove_api The pointer to BSP/driver-specific remove_api()
+  * @param pin_count The number of GPIO pins in the controller
+  *
+  * @retval RTEMS_SUCCESSFUL Controller registered successfully
+  * @retval RTEMS_TOO_MANY if the maximum number of controllers are
+  *         already registered
+  */
+extern rtems_status_code rtems_gpio_register(
+    rtems_status_code (*get_gpio)(uint32_t, rtems_gpio **),
+    rtems_status_code (*destroy_gpio)(rtems_gpio *),
+    rtems_periph_api *(*get_api)(rtems_gpio *, rtems_periph_api_type),
+    rtems_status_code (*remove_api)(rtems_gpio *),
+    uint32_t pin_count
+);
 
 /** @} */
 
@@ -255,11 +300,8 @@ extern rtems_status_code bsp_gpio_register_controllers(
 
 /** @} */
 
-
-/** @} */
-
 /**
-  * @name GPIO operations
+  * @name GPIO Application operations
   *
   * @{
   */
@@ -302,65 +344,6 @@ extern rtems_status_code rtems_gpio_get(
   * @retval RTEMS_UNSATISFIED
   */
 extern rtems_status_code rtems_gpio_destroy(
-    rtems_gpio *base
-);
-
-/**
-  * @brief Registers a GPIO controller with GPIO manager.
-  *
-  * This function registers the pointer to BSP/driver-specific
-  * get_gpio() and destroy_gpio() functions. Those two functions
-  * are for creating and destroying GPIO objects. It also takes 
-  * the number of pins of each BSP/driver for mapping into a
-  * flat pin numbering system (virtual pin number).
-  *
-  * @param get_gpio The pointer to BSP/driver-specific get_gpio()
-  * @param destroy_gpio The pointer to BSP/driver-specific 
-  *        destroy_gpio()
-  * @param pin_count The number of GPIO pins in the controller
-  *
-  * @retval RTEMS_SUCCESSFUL Controller registered successfully
-  * @retval RTEMS_TOO_MANY if the maximum number of controllers are
-  *         already registered
-  */
-extern rtems_status_code rtems_gpio_register(
-    rtems_status_code (*get_gpio)(uint32_t, rtems_gpio **),
-    rtems_status_code (*destroy_gpio)(rtems_gpio *),
-    uint32_t pin_count
-);
-
-/**
-  * @brief Initialize a GPIO object
-  *
-  * This function calls the registered BSP/driver-specific handler.
-  * It can be used to initialize a GPIO object/pin/port. It should
-  * be called once for each pin, before all non-setup operations.
-  *
-  * @param[in] base The pointer to a GPIO object
-  *
-  * @retval RTEMS_SUCCESSFUL GPIO object initialized successfully.
-  * @retval RTEMS_UNSATISFIED Could not initialize a GPIO object.
-  * @retval @see BSP/driver-specific function for other return codes.
-  */
-extern rtems_status_code rtems_gpio_init(
-    rtems_gpio *base
-);
-
-/**
-  * @brief Deinitialize a GPIO object
-  *
-  * This function calls the registered BSP/driver-specific handler.
-  * It can be used to deinitialize a GPIO object/pin/port. It 
-  * should be called once for each pin, before all non-setup 
-  * operations.
-  *
-  * @param[in] base The pointer to a GPIO object
-  *
-  * @retval RTEMS_SUCCESSFUL GPIO object deinitialized successfully.
-  * @retval RTEMS_UNSATISFIED Could not deinitialize a GPIO object.
-  * @retval @see BSP/driver-specific function for other return codes.
-  */
-extern rtems_status_code rtems_gpio_deinit(
     rtems_gpio *base
 );
 
