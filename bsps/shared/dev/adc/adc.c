@@ -28,15 +28,31 @@
 #include <bsp/adc.h>
 #include <stdbool.h>
 
+/**
+  * @brief Macro to check if an API pointer is ADC API.
+  * This only works if RTEMS_DEBUG is defined. This macro can
+  * only be called from functions. 
+  *
+  * @param _api_ptr A pointer to rtems_periph_api.
+  */ 
+#ifdef RTEMS_DEBUG
+#define RTEMS_ADC_API_TYPE_CHECK( _api_ptr )     \
+    do {                                                \
+        if ( *(rtems_periph_type *) ( _api_ptr ) != ( RTEMS_PERIPH_TYPE_ADC ) )               \
+            return RTEMS_UNSATISFIED;                   \
+    } while (0)
+#else
+#define RTEMS_ADC_API_TYPE_CHECK( _type )     \
+    ((void) ( _type ))
+#endif /* RTEMS_DEBUG */
+
 rtems_status_code rtems_adc_read_raw(
     rtems_gpio *base,
     uint32_t *result
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->read_raw(base, result, RTEMS_ADC_NO_TIMEOUT);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->read_raw(base, result, RTEMS_ADC_NO_TIMEOUT);
 }
 rtems_status_code rtems_adc_read_raw_timeout(
     rtems_gpio *base,
@@ -44,10 +60,8 @@ rtems_status_code rtems_adc_read_raw_timeout(
     uint32_t timeout
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->read_raw(base, result, timeout);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->read_raw(base, result, timeout);
 }
 
 rtems_adc_status rtems_adc_read_raw_nb(
@@ -55,10 +69,8 @@ rtems_adc_status rtems_adc_read_raw_nb(
     uint32_t *result
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->read_raw_nb(base, result);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->read_raw_nb(base, result);
 }
 
 rtems_status_code rtems_adc_assign_tf(
@@ -67,16 +79,18 @@ rtems_status_code rtems_adc_assign_tf(
     void *params
 )
 {
-    base->tf = tf;
-    base->tf_params = params;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    ((rtems_adc_api *) (base->api))->tf = tf;
+    ((rtems_adc_api *) (base->api))->tf_params = params;
     return RTEMS_SUCCESSFUL;
 }
 rtems_status_code rtems_adc_remove_tf(
     rtems_gpio *base
 )
 {
-    base->tf = NULL;
-    base->tf_params = NULL;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    ((rtems_adc_api *) (base->api))->tf = NULL;
+    ((rtems_adc_api *) (base->api))->tf_params = NULL;
     return RTEMS_SUCCESSFUL;
 }
 rtems_status_code rtems_adc_read(
@@ -84,13 +98,14 @@ rtems_status_code rtems_adc_read(
     double *result
 )
 {
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
     uint32_t raw;
     rtems_status_code sc = rtems_adc_read_raw(base, &raw);
     if (sc == RTEMS_SUCCESSFUL) {
-        if (base->tf == NULL)
+        if (((rtems_adc_api *) (base->api))->tf == NULL)
             *result = (double) raw;
         else
-            *result = base->tf(base->tf_params, raw);
+            *result = ((rtems_adc_api *) (base->api))->tf(((rtems_adc_api *) (base->api))->tf_params, raw);
     }
     return sc;
 }
@@ -100,13 +115,14 @@ rtems_status_code rtems_adc_read_timeout(
     uint32_t timeout
 )
 {
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
     uint32_t raw;
     rtems_status_code sc = rtems_adc_read_raw_timeout(base, &raw, timeout);
     if (sc == RTEMS_SUCCESSFUL) {
-        if (base->tf == NULL)
+        if (((rtems_adc_api *) (base->api))->tf == NULL)
             *result = (double) raw;
         else
-            *result = base->tf(base->tf_params, raw);
+            *result = ((rtems_adc_api *) (base->api))->tf(((rtems_adc_api *) (base->api))->tf_params, raw);
     }
     return sc;
 }
@@ -115,22 +131,22 @@ rtems_status_code rtems_adc_start_read_nb(
     rtems_gpio *base
 )
 {
-    if (base->is_adc_pin)
-        return base->adc_handlers->start_read_raw_nb(base);
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->start_read_raw_nb(base);
 }
 rtems_adc_status rtems_adc_read_nb(
     rtems_gpio *base,
     double *result
 )
 {
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
     uint32_t raw;
     rtems_adc_status sc = rtems_adc_read_raw_nb(base, &raw);
     if (sc == RTEMS_ADC_READY) {
-        if (base->tf == NULL)
+        if (((rtems_adc_api *) (base->api))->tf == NULL)
             *result = (double) raw;
         else
-            *result = base->tf(base->tf_params, raw);
+            *result = ((rtems_adc_api *) (base->api))->tf(((rtems_adc_api *) (base->api))->tf_params, raw);
     }
     return sc;
 }
@@ -140,20 +156,16 @@ rtems_status_code rtems_adc_set_resolution(
     unsigned int bits
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->set_resolution(base, bits);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->set_resolution(base, bits);
 }
 rtems_status_code rtems_adc_set_alignment(
     rtems_gpio *base,
     rtems_adc_align align
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->set_alignment(base, align);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->set_alignment(base, align);
 }
 
 rtems_status_code rtems_adc_configure_interrupt(
@@ -162,35 +174,27 @@ rtems_status_code rtems_adc_configure_interrupt(
     void *arg
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->configure_interrupt(base, isr, arg);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->configure_interrupt(base, isr, arg);
 }
 rtems_status_code rtems_adc_remove_interrupt(
     rtems_gpio *base
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->remove_interrupt(base);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->remove_interrupt(base);
 }
 rtems_status_code rtems_adc_enable_interrupt(
     rtems_gpio *base
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->enable_interrupt(base);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->enable_interrupt(base);
 }
 rtems_status_code rtems_adc_disable_interrupt(
     rtems_gpio *base
 )
 {
-    if (base->is_adc_pin) {
-        return base->adc_handlers->disable_interrupt(base);
-    }
-    return RTEMS_UNSATISFIED;
+    RTEMS_ADC_API_TYPE_CHECK( base->api );
+    return ((rtems_adc_api *) (base->api))->disable_interrupt(base);
 }

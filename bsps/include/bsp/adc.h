@@ -30,6 +30,7 @@
 
 #include <bsp.h>
 #include <rtems.h>
+#include <bsp/periph_api.h>
 #include <bsp/gpio2.h>
 
 #ifdef __cplusplus
@@ -66,15 +67,54 @@ typedef enum {
 typedef void (*rtems_adc_isr)(void *);
 typedef double (*rtems_adc_tf) (void *params, uint32_t raw_value);
 typedef struct rtems_adc_handlers rtems_adc_handlers;
-typedef struct rtems_adc rtems_adc;
+typedef struct rtems_adc_api rtems_adc_api;
 
 /**
-  * @brief Structure containing pointers to ADC handlers of a BSP/driver.
+  * @brief Macro to help creating a rtems_adc_api object.
   *
   * Each BSP/driver must define its own handlers and create an object 
   * of this struct with pointers to those handlers.
   */
-struct rtems_adc_handlers {
+#define RTEMS_ADC_BUILD_API(                                    \
+        _init,                                                  \
+        _read_raw,                                              \
+        _start_read_raw_nb,                                     \
+        _read_raw_nb,                                           \
+        _set_resolution,                                        \
+        _set_alignment,                                         \
+        _configure_interrupt,                                   \
+        _remove_interrupt,                                      \
+        _enable_interrupt,                                      \
+        _disable_interrupt)                                     \
+    {                                                           \
+        .base = {                                               \
+            .api_type = RTEMS_PERIPH_API_TYPE_ADC,              \
+            .init = _init                                       \
+        },                                                      \
+        .read_raw = ( _read_raw ),                              \
+        .start_read_raw_nb = ( _start_read_raw_nb ),            \
+        .read_raw_nb = ( _read_raw_nb ),                        \
+        .set_resolution = ( _set_resolution ),                  \
+        .set_alignment = ( _set_alignment ),                    \
+        .configure_interrupt = ( _configure_interrupt ),        \
+        .remove_interrupt = ( _remove_interrupt ),              \
+        .enable_interrupt = ( _enable_interrupt ),              \
+        .disable_interrupt = ( _disable_interrupt ),            \
+    };
+
+struct rtems_adc_api {
+    /**
+      * @brief Contain base structure rtems_periph_api.
+      * @see rtems_periph_api
+      */
+    rtems_periph_api base;
+    /**
+      * @brief This member is a pointer to a transfer function
+      *        that will be assigned to this pin.
+      * If no transfer function assigned, it should remain NULL.
+      */
+    rtems_adc_tf tf;
+    void *tf_params;
     /**
       * @brief Pointer to a function that reads raw ADC value.
       * This function is blocking and has a timeout parameter.
@@ -134,21 +174,6 @@ struct rtems_adc_handlers {
       *        interrupt of a pin.
       */
     rtems_status_code (*disable_interrupt) (rtems_gpio *);
-};
-
-struct rtems_adc {
-    /**
-      * @brief This member is a pointer to a structure containing
-      *        pointers to handlers of an ADC.
-      */
-    const rtems_adc_handlers *adc_handlers;
-    /**
-      * @brief This member is a pointer to a transfer function
-      *        that will be assigned to this pin.
-      * If no transfer function assigned, it should remain NULL.
-      */
-    rtems_adc_tf tf;
-    void *tf_params;
 };
 
 /**
