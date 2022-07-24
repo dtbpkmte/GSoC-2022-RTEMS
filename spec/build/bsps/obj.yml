@@ -18,6 +18,7 @@ install:
   - bsps/include/bsp/fdt.h
   - bsps/include/bsp/periph_api.h
   - bsps/include/bsp/gpio2.h
+  - bsps/include/bsp/adc.h
   - bsps/include/bsp/irq-default.h
   - bsps/include/bsp/irq-generic.h
   - bsps/include/bsp/irq-info.h
@@ -72,6 +73,7 @@ links:
   uid: objnosmp
 source:
 - bsps/shared/dev/gpio/gpio.c
+- bsps/shared/dev/adc/adc.c
 - bsps/shared/dev/periph_api/periph_api.c
 - bsps/shared/dev/display/disp_hcms29xx.c
 - bsps/shared/dev/display/font_hcms29xx.c
