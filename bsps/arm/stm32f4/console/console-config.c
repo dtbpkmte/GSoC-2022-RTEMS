@@ -7,6 +7,7 @@
  */
 
 #include <rtems/bspIo.h>
+#include <rtems/sysinit.h>
 
 #include <libchip/serial.h>
 
@@ -83,7 +84,9 @@ console_tbl Console_Configuration_Ports [] = {
     },
   #endif
 };
-
+#ifdef __rtems__
+console_tbl *stm32f4_default_console_tbl_ptr = &Console_Configuration_Ports[0];
+#endif /* __rtems__ */
 #define PORT_COUNT \
   (sizeof(Console_Configuration_Ports) \
     / sizeof(Console_Configuration_Ports [0]))
@@ -98,6 +101,47 @@ static void output_char(char c)
   con->deviceWritePolled((int) Console_Port_Minor, c);
 }
 
-BSP_output_char_function_type BSP_output_char = output_char;
+#ifdef __rtems__
+static void output_char_init(void)
+{
+  const console_fns *con =
+    Console_Configuration_Ports [Console_Port_Minor].pDeviceFns;
 
+  con->deviceInitialize((int) Console_Port_Minor);
+  BSP_output_char = output_char;
+}
+
+static void output_char_init_early(char c)
+{
+    output_char_init();
+    output_char(c);
+}
+
+static int poll_char(void)
+{
+  const console_fns *con =
+    Console_Configuration_Ports [Console_Port_Minor].pDeviceFns;
+
+  return con->deviceRead((int) Console_Port_Minor);
+}
+#endif /* __rtems__ */
+
+#ifndef __rtems__
+BSP_output_char_function_type BSP_output_char = output_char;
+#endif /* __rtems__ */
+#ifdef __rtems__
+BSP_output_char_function_type BSP_output_char = output_char_init_early;
+#endif /* __rtems__ */
+
+#ifndef __rtems__
 BSP_polling_getchar_function_type BSP_poll_char = NULL;
+#endif /* __rtems__ */
+#ifdef __rtems__
+BSP_polling_getchar_function_type BSP_poll_char = poll_char;
+
+RTEMS_SYSINIT_ITEM(
+  output_char_init,
+  RTEMS_SYSINIT_BSP_START,
+  RTEMS_SYSINIT_ORDER_LAST_BUT_5
+);
+#endif /* __rtems__ */

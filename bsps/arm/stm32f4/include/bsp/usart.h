@@ -29,6 +29,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 extern const console_fns stm32f4_usart_fns;
+#ifdef __rtems__
+extern console_tbl *stm32f4_default_console_tbl_ptr;
+#endif /* __rtems__ */
 
 /** @} */
 

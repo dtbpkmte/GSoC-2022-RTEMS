@@ -116,8 +116,14 @@ static uint32_t usart_get_bbr(
 
 static void usart_initialize(int minor)
 {
+#ifndef __rtems__
   const console_tbl *ct = Console_Port_Tbl [minor];
   volatile stm32f4_usart *usart = usart_get_regs(ct);
+#endif /* __rtems__ */
+#ifdef __rtems__
+  const console_tbl *ct = stm32f4_default_console_tbl_ptr;
+  volatile stm32f4_usart *usart = usart_get_regs(ct);
+#endif /* __rtems__ */
   uint32_t pclk = usart_get_pclk(ct);
   uint32_t baud = usart_get_baud(ct);
   stm32f4_rcc_index rcc_index = usart_get_rcc_index(ct);
@@ -137,7 +143,12 @@ static int usart_first_open(int major, int minor, void *arg)
 {
   rtems_libio_open_close_args_t *oc = (rtems_libio_open_close_args_t *) arg;
   struct rtems_termios_tty *tty = (struct rtems_termios_tty *) oc->iop->data1;
+#ifndef __rtems__
   const console_tbl *ct = Console_Port_Tbl [minor];
+#endif /* __rtems__ */
+#ifdef __rtems__
+  const console_tbl *ct = stm32f4_default_console_tbl_ptr;
+#endif /* __rtems__ */
   console_data *cd = &Console_Port_Data [minor];
 
   cd->termios_data = tty;
@@ -153,8 +164,14 @@ static int usart_last_close(int major, int minor, void *arg)
 
 static int usart_read_polled(int minor)
 {
+#ifndef __rtems__
   const console_tbl *ct = Console_Port_Tbl [minor];
   volatile stm32f4_usart *usart = usart_get_regs(ct);
+#endif /* __rtems__ */
+#ifdef __rtems__
+  const console_tbl *ct = stm32f4_default_console_tbl_ptr;
+  volatile stm32f4_usart *usart = usart_get_regs(ct);
+#endif /* __rtems__ */
 
   if ((usart->sr & STM32F4_USART_SR_RXNE) != 0) {
     return STM32F4_USART_DR_GET(usart->dr);
@@ -165,8 +182,14 @@ static int usart_read_polled(int minor)
 
 static void usart_write_polled(int minor, char c)
 {
+#ifndef __rtems__
   const console_tbl *ct = Console_Port_Tbl [minor];
   volatile stm32f4_usart *usart = usart_get_regs(ct);
+#endif /* __rtems__ */
+#ifdef __rtems__
+  const console_tbl *ct = stm32f4_default_console_tbl_ptr;
+  volatile stm32f4_usart *usart = usart_get_regs(ct);
+#endif /* __rtems__ */
 
   while ((usart->sr & STM32F4_USART_SR_TXE) == 0) {
     /* Wait */
