@@ -132,7 +132,7 @@ rtems_status_code rtems_gpio_destroy(
     return (*destroy_gpio_table[i])(base);
 }
 
-void rtems_gpio_start(
+static void rtems_gpio_start(
     void
 )
 {
@@ -141,8 +141,8 @@ void rtems_gpio_start(
 }
 RTEMS_SYSINIT_ITEM(
     rtems_gpio_start,
-    RTEMS_SYSINIT_DEVICE_DRIVERS,
-    RTEMS_SYSINIT_ORDER_LAST_BUT_1
+    RTEMS_SYSINIT_BSP_PRE_DRIVERS,
+    RTEMS_SYSINIT_ORDER_LAST
 );
 
 rtems_status_code rtems_gpio_set_pin_mode(

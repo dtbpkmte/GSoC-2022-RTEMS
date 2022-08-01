@@ -252,16 +252,6 @@ struct rtems_gpio {
   */
 
 /**
-  * @brief Perform initialization for GPIO system and 
-  *        Peripheral API system.
-  * This function is called automatically using 
-  * SYSINIT.
-  */
-extern void rtems_gpio_start(
-    void
-);
-
-/**
   * @brief Registers a GPIO controller with GPIO manager.
   *
   * This function registers the pointer to driver-specific
