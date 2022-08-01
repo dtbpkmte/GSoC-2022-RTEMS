@@ -37,6 +37,8 @@
 #include <bsp/stm32f4_gpio.h>
 #include <bsp/stm32f4_periph.h>
 
+#ifdef __ENABLE_GPIO_API
+
 /*********** GPIO API ***************/
 static rtems_status_code stm32f4_gpio_get(
     uint32_t interm_pin,
@@ -546,3 +548,4 @@ void stm32f4_gpio_set_af(
         );
 }
 
+#endif /* __ENABLE_GPIO_API */

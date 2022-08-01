@@ -1,16 +1,16 @@
 SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 actions:
-- get-integer: null
+- get-boolean: null
 - define: null
 build-type: option
 copyrights:
 - Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
-default: 0
+default: null
 default-by-variant: []
 description: |
-  The number of external ADC used.
+  This option enables the BSP to use RTEMS GPIO API if defined.
 enabled-by: true
 format: '{}'
 links: []
-name: BSP_NUM_ADC
+name: BSP_ENABLE_GPIO
 type: build

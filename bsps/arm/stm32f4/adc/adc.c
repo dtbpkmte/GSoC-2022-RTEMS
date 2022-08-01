@@ -35,6 +35,8 @@
 #include <bsp/stm32f4_gpio.h>
 #include <stdlib.h>
 
+#ifdef __ENABLE_ADC_API
+
 #if defined(ADC3)
 #define NUM_ADC 3
 #elif defined(ADC2)
@@ -659,3 +661,4 @@ void adc_irq_handler(void *arg) {
     rtems_interrupt_enable( level );
 }
 
+#endif /* __ENABLE_ADC_API */

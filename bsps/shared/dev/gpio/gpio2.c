@@ -31,6 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef BSP_ENABLE_GPIO
+
 #include <bsp/gpio2.h>
 #include <rtems/sysinit.h>
 
@@ -216,3 +218,4 @@ rtems_status_code rtems_gpio_toggle(
     return base->gpio_handlers->toggle(base);
 }
 
+#endif /* BSP_ENABLE_GPIO */

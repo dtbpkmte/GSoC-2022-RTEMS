@@ -33,6 +33,8 @@
 
 #include <bsp/periph_api.h>
 
+#ifdef __ENABLE_PERIPH_API
+
 /**
   * @brief An array to store handlers to get peripheral 
   *        API of each registered GPIO controller.
@@ -105,3 +107,5 @@ rtems_status_code rtems_periph_api_remove_api(
 
     return (*remove_api_table[i])(pin);
 }
+
+#endif /* __ENABLE_PERIPH_API */

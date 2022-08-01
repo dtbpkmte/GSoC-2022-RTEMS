@@ -42,6 +42,8 @@
 #include <stm32f4xx_ll_exti.h>
 #include <bsp/gpio2.h>
 
+#ifdef __ENABLE_GPIO_API
+
 /*********** Helpers *****************/
 /**
   * @brief Macro to get stm32f4_gpio object from a base rtems_gpio
@@ -277,5 +279,7 @@ extern void stm32f4_gpio_set_af(
 /** @} */
 
 /** @} */
+
+#endif /* __ENABLE_GPIO_API */
 
 #endif /* LIBBSP_ARM_STM32F4_BSP_GPIO */

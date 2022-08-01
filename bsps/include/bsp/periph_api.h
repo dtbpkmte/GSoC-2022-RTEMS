@@ -79,6 +79,10 @@ typedef struct rtems_periph_api rtems_periph_api;
 
 #include <bsp/gpio2.h>
 
+#ifdef __ENABLE_GPIO_API
+
+#define __ENABLE_PERIPH_API
+
 /**
   * rtems_periph_api structure definition.
   */
@@ -171,5 +175,7 @@ rtems_status_code rtems_periph_api_remove_api(
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#endif /* __ENABLE_GPIO_API */
 
 #endif /* LIBBSP_BSP_PERIPH_API_H */

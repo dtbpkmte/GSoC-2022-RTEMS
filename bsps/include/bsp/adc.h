@@ -45,6 +45,11 @@
 #include <bsp/periph_api.h>
 #include <bsp/gpio2.h>
 
+
+#ifdef __ENABLE_GPIO_API
+
+#define __ENABLE_ADC_API
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -300,5 +305,7 @@ extern rtems_status_code rtems_adc_disable_interrupt(
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#endif /* __ENABLE_GPIO_API */
 
 #endif /* LIBBSP_BSP_ADC_H */

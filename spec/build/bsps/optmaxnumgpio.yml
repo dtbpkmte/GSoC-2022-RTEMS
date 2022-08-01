@@ -1,16 +1,16 @@
 SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 actions:
-- get-boolean: null
-- define-condition: null
+- get-integer: null
+- define: null
 build-type: option
 copyrights:
 - Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
-default: false
+default: null
 default-by-variant: []
 description: |
-  This option enables the BSP to use RTEMS ADC API.
+  The number of GPIO controllers used for this application.
 enabled-by: true
 format: '{}'
 links: []
-name: BSP_ENABLE_ADC
+name: CONFIGURE_GPIO_MAXIMUM_CONTROLLERS
 type: build

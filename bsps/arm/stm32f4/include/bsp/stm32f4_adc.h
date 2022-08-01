@@ -38,6 +38,9 @@
 
 #include <rtems/sysinit.h>
 #include <bsp/adc.h>
+
+#ifdef __ENABLE_ADC_API
+
 #include <stm32f4xx_ll_bus.h>
 #include <stm32f4xx_ll_adc.h>
 #include <bsp/stm32f4_gpio.h>
@@ -213,5 +216,7 @@ rtems_status_code stm32f4_adc_enable_interrupt(
 rtems_status_code stm32f4_adc_disable_interrupt(
     rtems_gpio *base
 );
+
+#endif /* __ENABLE_ADC_API */
 
 #endif /* LIBBSP_ARM_STM32F4_BSP_ADC */

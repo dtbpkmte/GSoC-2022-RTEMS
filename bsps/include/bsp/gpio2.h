@@ -15,6 +15,11 @@
  * be referred to as a "GPIO object". A "driver" could mean a BSP or a 
  * device driver. A GPIO controller may refer to a physical GPIO controller,
  * an ADC, a DAC, or just a group of pins that contains one or more pins.
+ *
+ * This API is disabled by default. To enable it, BSP_ENABLE_GPIO option must
+ * be defined. Also, CONFIGURE_MAXIMUM_GPIO_CONTROLLERS and/or 
+ * BSP_NUM_GPIO_CONTROLLER must be set. If CONFIGURE_MAXIMUM_GPIO_CONTROLLERS
+ * is zero, GPIO API is disabled.
  */
 
 /*
@@ -45,6 +50,8 @@
 #ifndef LIBBSP_BSP_GPIO2_H
 #define LIBBSP_BSP_GPIO2_H
 
+#ifdef BSP_ENABLE_GPIO
+
 #include <bsp.h>
 #include <rtems.h>
 
@@ -52,21 +59,24 @@
   * Configure the maximum number of GPIO controllers used in
   * a application.
   *
-  * The macro CONFIGURE_GPIO_MAXIMUM_CONTROLLERS can be
-  * defined in application code. If it is not defined,
-  * it will default to BSP_GPIO_NUM_CONTROLLERS. If BSP's
-  * number of controllers is not defined, it will default
-  * to 1.
+  * The macro CONFIGURE_GPIO_MAXIMUM_CONTROLLERS is a build option.
+  * If it is not defined, it will default to BSP_GPIO_NUM_CONTROLLERS. 
+  * If BSP's number of controllers is not defined, it will default
+  * to 0 (thus disabling GPIO API).
   */
 #ifndef CONFIGURE_GPIO_MAXIMUM_CONTROLLERS
 
 #ifndef BSP_GPIO_NUM_CONTROLLERS
-#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 1
+#define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS 0
 #else
 #define CONFIGURE_GPIO_MAXIMUM_CONTROLLERS BSP_GPIO_NUM_CONTROLLERS
 #endif /* BSP_GPIO_NUM_CONTROLLERS */
 
 #endif /* CONFIGURE_GPIO_MAXIMUM_CONTROLLERS */
+
+#if CONFIGURE_GPIO_MAXIMUM_CONTROLLERS > 0
+
+#define __ENABLE_GPIO_API
 
 #ifdef __cplusplus
 extern "C" {
@@ -529,5 +539,9 @@ extern rtems_status_code rtems_gpio_toggle(
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
+
+#endif /* __ENABLE_GPIO_API */
+
+#endif /* BSP_ENABLE_GPIO */
 
 #endif /* LIBBSP_BSP_GPIO2_H */

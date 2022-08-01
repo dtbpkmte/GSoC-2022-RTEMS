@@ -38,6 +38,8 @@
 
 #include <bsp/periph_api.h>
 
+#ifdef __ENABLE_PERIPH_API
+
 /**
   * @brief STM32F4 BSP's function to get a
   *        peripheral API.
@@ -54,5 +56,7 @@ rtems_periph_api *stm32f4_periph_get_api(
 rtems_status_code stm32f4_periph_remove_api(
     rtems_gpio *pin
 );
+
+#endif /* __ENABLE_PERIPH_API */
 
 #endif /* LIBBSP_BSP_ARM_STM32F4_PERIPH_H */

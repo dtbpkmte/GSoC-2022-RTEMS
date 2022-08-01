@@ -35,6 +35,8 @@
 #include <bsp/stm32f4_adc.h>
 #include <bsp/stm32f4_periph.h>
 
+#ifdef __ENABLE_PERIPH_API
+
 rtems_periph_api *stm32f4_periph_get_api(
     rtems_gpio *pin,
     rtems_periph_api_type type
@@ -62,3 +64,5 @@ rtems_status_code stm32f4_periph_remove_api(
             return RTEMS_UNSATISFIED;
     }
 }
+
+#endif /* __ENABLE_PERIPH_API */

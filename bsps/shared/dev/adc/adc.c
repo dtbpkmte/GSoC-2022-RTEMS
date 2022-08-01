@@ -32,6 +32,9 @@
  */
 
 #include <bsp/adc.h>
+
+#ifdef __ENABLE_ADC_API
+
 #include <stdbool.h>
 
 /**
@@ -204,3 +207,5 @@ rtems_status_code rtems_adc_disable_interrupt(
     RTEMS_ADC_API_TYPE_CHECK( base->api );
     return ((rtems_adc_api *) (base->api))->disable_interrupt(base);
 }
+
+#endif /* __ENABLE_ADC_API */
