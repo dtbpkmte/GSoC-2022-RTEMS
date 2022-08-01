@@ -72,7 +72,7 @@ links:
 - role: build-dependency
   uid: objnosmp
 source:
-- bsps/shared/dev/gpio/gpio.c
+- bsps/shared/dev/gpio/gpio2.c
 - bsps/shared/dev/adc/adc.c
 - bsps/shared/dev/periph_api/periph_api.c
 - bsps/shared/dev/display/disp_hcms29xx.c
