@@ -106,7 +106,7 @@ typedef enum {
     RTEMS_GPIO_PINMODE_OUTPUT_OD = 1,
     RTEMS_GPIO_PINMODE_INPUT = 2,
     RTEMS_GPIO_PINMODE_ANALOG = 3,
-    RTEMS_GPIO_PINMODE_BSP_SPECIFIC = 4
+    RTEMS_GPIO_PINMODE_BSP_SPECIFIC = 100
 } rtems_gpio_pin_mode;
 
 /**
@@ -114,9 +114,10 @@ typedef enum {
   *        pull-down activation.
   */
 typedef enum {
-    RTEMS_GPIO_NOPULL,
-    RTEMS_GPIO_PULLUP,
-    RTEMS_GPIO_PULLDOWN
+    RTEMS_GPIO_NOPULL = 0,
+    RTEMS_GPIO_PULLUP = 1,
+    RTEMS_GPIO_PULLDOWN = 2,
+    RTEMS_GPIO_PULL_BSP_SPECIFIC = 100
 } rtems_gpio_pull;
 
 /**
