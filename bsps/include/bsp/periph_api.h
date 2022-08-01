@@ -64,7 +64,9 @@ extern "C" {
   * New APIs should be added to this enum.
   */
 typedef enum {
-    RTEMS_PERIPH_API_TYPE_ADC
+    RTEMS_PERIPH_API_TYPE_ADC,
+    RTEMS_PERIPH_API_TYPE_BSP_SPECIFIC = 100,
+    RTEMS_PERIPH_API_TYPE_APP_SPECIFIC = 200,
 } rtems_periph_api_type;
 
 /**
