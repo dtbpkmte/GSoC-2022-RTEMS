@@ -12,4 +12,3 @@ Makefile.in
 /testsuites/build/build
 /testsuites/build/wscript
 .waf*
-/patches
