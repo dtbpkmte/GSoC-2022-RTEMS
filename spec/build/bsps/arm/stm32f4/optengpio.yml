@@ -5,12 +5,12 @@ actions:
 build-type: option
 copyrights:
 - Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
-default: true
+default: false
 default-by-variant: []
 description: |
-  This option enables the BSP to use RTEMS GPIO API.
+  This option enables the BSP to use RTEMS GPIO API if defined.
 enabled-by: true
 format: '{}'
 links: []
-name: STM32F4_ENABLE_GENERIC_GPIO
+name: BSP_ENABLE_GPIO
 type: build

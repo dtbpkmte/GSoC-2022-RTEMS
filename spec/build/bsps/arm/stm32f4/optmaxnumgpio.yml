@@ -1,11 +1,11 @@
 SPDX-License-Identifier: CC-BY-SA-4.0 OR BSD-2-Clause
 actions:
 - get-integer: null
-- define-condition: null
+- define: null
 build-type: option
 copyrights:
 - Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
-default: 0
+default: null
 default-by-variant: []
 description: |
   The number of GPIO controllers used for this application.

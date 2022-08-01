@@ -21,8 +21,6 @@ links:
 - role: build-dependency
   uid: optenhal
 - role: build-dependency
-  uid: optengpio
-- role: build-dependency
   uid: optvariant
 - role: build-dependency
   uid: opthse

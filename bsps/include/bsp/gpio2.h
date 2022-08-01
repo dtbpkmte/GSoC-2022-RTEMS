@@ -50,10 +50,10 @@
 #ifndef LIBBSP_BSP_GPIO2_H
 #define LIBBSP_BSP_GPIO2_H
 
-#ifdef BSP_ENABLE_GPIO
-
 #include <bsp.h>
 #include <rtems.h>
+
+#ifdef BSP_ENABLE_GPIO
 
 /**
   * Configure the maximum number of GPIO controllers used in
@@ -540,7 +540,7 @@ extern rtems_status_code rtems_gpio_toggle(
 }
 #endif /* __cplusplus */
 
-#endif /* __ENABLE_GPIO_API */
+#endif /* CONFIGURE_MAXIMUM_GPIO_CONTROLLERS > 0 */
 
 #endif /* BSP_ENABLE_GPIO */
 
