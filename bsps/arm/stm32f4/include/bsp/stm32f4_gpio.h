@@ -1,5 +1,13 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+/**
+  * @file
+  * 
+  * @ingroup stm32f4_gpio
+  *
+  * STM32F4 BSP implementation of GPIO.
+  */
+
 /*
  * Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
  *

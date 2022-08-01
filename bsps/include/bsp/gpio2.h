@@ -1,5 +1,22 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+/**
+ * @file
+ *
+ * @ingroup gpio2
+ *
+ * RTEMS new GPIO API.
+ *
+ * This API is created to improve portability and simplicity for GPIO.
+ *
+ * This API maps GPIO pins into a flat numbering system, counting from 0. 
+ * This pin number is often referred to as a virtual pin number. A GPIO pin 
+ * is represented by the structure @ref rtems_gpio. This structure may also 
+ * be referred to as a "GPIO object". A "driver" could mean a BSP or a 
+ * device driver. A GPIO controller may refer to a physical GPIO controller,
+ * an ADC, a DAC, or just a group of pins that contains one or more pins.
+ */
+
 /*
  * Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
  *
@@ -125,21 +142,21 @@ typedef void (*rtems_gpio_isr)(void *);
 
 /**
   * @brief Structure containing pointers to handlers of a
-  *        BSP/driver. Each BSP/driver must define its own 
+  *        driver. Each driver must define its own 
   *        handlers and create an object of this structure
   *        with pointers to those handlers.
   */
 struct rtems_gpio_handlers {
     /**
-      * @brief This member is the pointer to a handler for setting 
+      * @brief Handler for setting 
       *        pin mode. 
       *
-      * Pin modes are from rtems_gpio_pin_mode enumeration.
+      * Pin modes are from @ref rtems_gpio_pin_mode enumeration.
       */
     rtems_status_code (*set_pin_mode)(rtems_gpio *, rtems_gpio_pin_mode);
 
     /**
-      * @brief This member is the pointer to a handler for setting
+      * @brief Handler for setting
       *        pull resistor mode. 
       *
       * Pull resistor modes are from rtems_gpio_pull enumeration.
@@ -147,7 +164,7 @@ struct rtems_gpio_handlers {
     rtems_status_code (*set_pull)(rtems_gpio *, rtems_gpio_pull);
 
     /**
-      * @brief This member is the pointer to a handler for configuring
+      * @brief Handler for configuring
       *        interrupt of a pin. 
       * 
       * This handler should register ISR and its argument, interrupt
@@ -159,7 +176,7 @@ struct rtems_gpio_handlers {
     rtems_status_code (*configure_interrupt)(rtems_gpio *, rtems_gpio_isr, void *, rtems_gpio_interrupt_trig, rtems_gpio_pull);
 
     /**
-      * @brief This member is the pointer to a handler for removing
+      * @brief Handler for removing
       *        interrupt settings of a pin. 
       *
       * Interrupt settings can be ISR address, pin configuration, etc.
@@ -167,19 +184,19 @@ struct rtems_gpio_handlers {
     rtems_status_code (*remove_interrupt)(rtems_gpio *);
 
     /**
-      * @brief This member is the pointer to a handler for enabling
+      * @brief Handler for enabling
       *        interrupt functionality of a pin.
       */
     rtems_status_code (*enable_interrupt)(rtems_gpio *);
 
     /**
-      * @brief This member is the pointer to a handler for disabling
+      * @brief Handler for disabling
       *        interrupt of a pin. 
       */
     rtems_status_code (*disable_interrupt)(rtems_gpio *);
 
     /**
-      * @brief This member is the pointer to a handler for reading
+      * @brief Handler for reading
       *        the digital value of a pin. 
       *
       * The returned value should be in rtems_gpio_pin_state enum.
@@ -187,13 +204,13 @@ struct rtems_gpio_handlers {
     rtems_status_code (*read)(rtems_gpio *, rtems_gpio_pin_state *);
 
     /**
-      * @brief This member is the pointer to a handler for writing 
+      * @brief Handler for writing 
       *        a digital value to a pin. 
       */
     rtems_status_code (*write)(rtems_gpio *, rtems_gpio_pin_state);
 
     /**
-      * @brief This member is the pointer to a handler for toggling
+      * @brief Handler for toggling
       *        a pin. 
       *
       * It should change pin state from SET to RESET or vice versa.
@@ -205,22 +222,20 @@ struct rtems_gpio_handlers {
 /**
   * @brief Structure representing a GPIO object. 
   *
-  * BSP/drivers need to define their own GPIO structures with
+  * Drivers need to define their own GPIO structures with
   * rtems_gpio being the first member.
   */
 struct rtems_gpio {
     /**
-      * @brief This member is a virtual pin number, counting from
-      *        0 (zero).
+      * @brief The pin's virtual pin number
       */
     uint32_t virtual_pin;
     /**
-      * @brief This member is a pointer to a structure containing
-      *        pointers to handlers of a GPIO controller.
+      * @brief Handlers for this GPIO controller.
       */
     const rtems_gpio_handlers *gpio_handlers;
     /**
-      * @brief This member is a pointer to a peripheral API.
+      * @brief The pin's additional peripheral API.
       */
     rtems_periph_api *api;
 };
@@ -230,9 +245,8 @@ struct rtems_gpio {
 /**
   * @name GPIO System operations
   *
-  * Functions in this group should not be called by user
-  * applications. They are used by BSP/drivers only.
-  *
+  * Functions in this group are mostly used by drivers to configure
+  * the GPIO system.
   * @{
   */
 
@@ -249,19 +263,19 @@ extern void rtems_gpio_start(
 /**
   * @brief Registers a GPIO controller with GPIO manager.
   *
-  * This function registers the pointer to BSP/driver-specific
+  * This function registers the pointer to driver-specific
   * get_gpio() and destroy_gpio() functions. Those two functions
   * are for creating and destroying GPIO objects. It also takes 
-  * the number of pins of each BSP/driver for mapping into a
+  * the number of pins of each driver for mapping into a
   * flat pin numbering system (virtual pin number).
   * This function also help register peripherals API get()
   * and remove() functions.
   *
-  * @param get_gpio The pointer to BSP/driver-specific get_gpio()
-  * @param destroy_gpio The pointer to BSP/driver-specific 
+  * @param get_gpio The pointer to driver-specific get_gpio()
+  * @param destroy_gpio The pointer to driver-specific 
   *        destroy_gpio()
-  * @param get_api The pointer to BSP/driver-specific get_api()
-  * @param remove_api The pointer to BSP/driver-specific remove_api()
+  * @param get_api The pointer to driver-specific get_api()
+  * @param remove_api The pointer to driver-specific remove_api()
   * @param pin_count The number of GPIO pins in the controller
   *
   * @retval RTEMS_SUCCESSFUL Controller registered successfully
@@ -311,7 +325,7 @@ extern rtems_status_code bsp_gpio_register_controllers(
   *        about the specified pin.
   * 
   * This function maps the virtual pin to intermediate pin, 
-  * and pass to the BSP/driver-specific function to get a
+  * and pass to the driver-specific function to get a
   * GPIO object.
   *
   * @note Warning: this function may use malloc(). When you 
@@ -350,7 +364,7 @@ extern rtems_status_code rtems_gpio_destroy(
 /**
   * @brief Sets the pin mode of a pin.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   * It can be used to set the pin mode for a pin. 
   *
   * @param[in] base The GPIO object to be configured.
@@ -358,7 +372,7 @@ extern rtems_status_code rtems_gpio_destroy(
   *
   * @retval RTEMS_SUCCESSFUL GPIO configured successfully.
   * @retval RTEMS_UNSATISFIED Could not set the pin mode.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_set_pin_mode(
     rtems_gpio *base, 
@@ -368,7 +382,7 @@ extern rtems_status_code rtems_gpio_set_pin_mode(
 /**
   * @brief Sets the pin's pull resistor configuration.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   * It can be used to set the pull resistor mode for a pin.
   *
   * @param[in] base The GPIO object to be configured.
@@ -376,7 +390,7 @@ extern rtems_status_code rtems_gpio_set_pin_mode(
   *
   * @retval RTEMS_SUCCESSFUL GPIO configured successfully.
   * @retval RTEMS_UNSATISFIED Could not set the pull resistor mode.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_set_pull(
     rtems_gpio *base, 
@@ -386,7 +400,7 @@ extern rtems_status_code rtems_gpio_set_pull(
 /**
   * @brief Configure interrupt on a GPIO pin.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   * It can be used to set up a pin for interrupt mode.
   *
   * @note This only configures the interrupt but not enable it. Use
@@ -400,7 +414,7 @@ extern rtems_status_code rtems_gpio_set_pull(
   *
   * @retval RTEMS_SUCCESSFUL Interrupt configured successfully.
   * @retval RTEMS_UNSATISFIED Could not configure interrupt.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_configure_interrupt(
     rtems_gpio *base, 
@@ -413,7 +427,7 @@ extern rtems_status_code rtems_gpio_configure_interrupt(
 /**
   * @brief Remove interrupt settings for a pin.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   * It can be used to remove interrupt configuration of a pin like
   * ISR, ISR argument, pin mode, etc.
   *
@@ -425,7 +439,7 @@ extern rtems_status_code rtems_gpio_configure_interrupt(
   *
   * @retval RTEMS_SUCCESSFUL Interrupt removed successfully.
   * @retval RTEMS_UNSATISFIED Could not remove interrupt.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_remove_interrupt(
     rtems_gpio *base
@@ -434,7 +448,7 @@ extern rtems_status_code rtems_gpio_remove_interrupt(
 /**
   * @brief Enable interrupt on a GPIO pin.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   *
   * @note This function only enables the interrupt (e.g. the vector)
   *       but not configure the pin. Use 
@@ -444,7 +458,7 @@ extern rtems_status_code rtems_gpio_remove_interrupt(
   *
   * @retval RTEMS_SUCCESSFUL Interrupt enabled successfully.
   * @retval RTEMS_UNSATISFIED Could not enable interrupt.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_enable_interrupt(
     rtems_gpio *base
@@ -453,7 +467,7 @@ extern rtems_status_code rtems_gpio_enable_interrupt(
 /**
   * @brief Disable interrupt on a GPIO pin.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   *
   * @note This function only disables the interrupt (e.g. the vector)
   *       but not remove the pin's configurations. Use 
@@ -463,7 +477,7 @@ extern rtems_status_code rtems_gpio_enable_interrupt(
   *
   * @retval RTEMS_SUCCESSFUL Interrupt disabled successfully.
   * @retval RTEMS_UNSATISFIED Could not disable interrupt.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_disable_interrupt(
     rtems_gpio *base
@@ -472,14 +486,14 @@ extern rtems_status_code rtems_gpio_disable_interrupt(
 /**
   * @brief Writes a digital value to a pin. 
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   *
   * @param[in] base The GPIO object that has information about the
   *                  pin.
   * @param value The state to be written to the pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin successfully written.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_write(
     rtems_gpio *base, 
@@ -489,7 +503,7 @@ extern rtems_status_code rtems_gpio_write(
 /**
   * @brief Reads the digital value of a pin. 
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   *
   * @param[in] base The GPIO object that has information about the
   *                  pin.
@@ -497,7 +511,7 @@ extern rtems_status_code rtems_gpio_write(
   * @param[out] value The state of the pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin succesfully read.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_read(
     rtems_gpio *base, 
@@ -507,13 +521,13 @@ extern rtems_status_code rtems_gpio_read(
 /**
   * @brief Toggles the state of a GPIO pin.
   *
-  * This function calls the registered BSP/driver-specific handler.
+  * This function calls the registered driver-specific handler.
   *
   * @param[in] base The GPIO object that has information about the
   *                  pin.
   *
   * @retval RTEMS_SUCCESSFUL Pin successfully toggled.
-  * @retval @see BSP/driver-specific function for other return codes.
+  * @retval See driver-specific function for other return codes.
   */
 extern rtems_status_code rtems_gpio_toggle(
     rtems_gpio *base

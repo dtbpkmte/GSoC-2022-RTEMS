@@ -1,5 +1,17 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+/**
+ * @file
+ *
+ * @ingroup adc
+ *
+ * RTEMS ADC API.
+ *
+ * This API is created to improve portability and simplicity for ADC.
+ *
+ * This API extends the Peripheral API. Its type is RTEMS_PERIPH_API_TYPE_ADC.
+ */
+
 /*
  * Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
  *

@@ -1,5 +1,11 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+/**
+  * @file
+  *
+  * @ingroup adc
+  */
+
 /*
  * Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
  *

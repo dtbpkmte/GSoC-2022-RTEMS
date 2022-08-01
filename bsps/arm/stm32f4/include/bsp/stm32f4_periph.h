@@ -1,5 +1,13 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+/**
+  * @file
+  *
+  * @ingroup stm32f4_periph_api
+  *
+  * STM32F4 BSP implementation of Peripheral API.
+  */
+
 /*
  * Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
  *

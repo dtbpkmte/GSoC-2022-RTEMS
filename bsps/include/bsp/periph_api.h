@@ -1,5 +1,22 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 
+/**
+ * @file
+ *
+ * @ingroup periph_api
+ *
+ * RTEMS Peripheral API
+ *
+ * This API acts as a base system for all peripheral APIs that operate on
+ * a single GPIO pin. The main intention is to simplify user application
+ * when dealing with additional functionality of GPIO pins.
+ *
+ * New APIs can be created based on this core API. In OOP language, they
+ * just have to inherit the base class rtems_periph_api. In other words,
+ * new APIs need to create a new structure that has a @ref rtems_periph_api
+ * as the first member and implement some required functions.
+ */
+
 /*
  * Copyright (C) 2022 Duc Doan (dtbpkmte at gmail.com)
  *
@@ -36,7 +53,15 @@ extern "C" {
 #endif /* __cplusplus */
 
 /**
+  * @name Peripheral API data structures.
+  *
+  * @{
+  */
+
+/**
   * @brief Enumeration of supported peripheral APIs.
+  *
+  * New APIs should be added to this enum.
   */
 typedef enum {
     RTEMS_PERIPH_API_TYPE_ADC
@@ -44,8 +69,7 @@ typedef enum {
 
 /**
   * @brief The base structure of peripheral APIs.
-  * All peripheral APIs must have this struct as
-  * their first member.
+  * All peripheral APIs must have this struct as their first member.
   *
   * @see rtems_adc_api for example implementation.
   */
@@ -58,24 +82,29 @@ typedef struct rtems_periph_api rtems_periph_api;
   */
 struct rtems_periph_api {
     /**
-      * @brief This member tells the type of this
-      *        API.
+      * @brief The type of this API.
       */
     rtems_periph_api_type api_type;
     /**
-      * @brief This member is a pointer to a 
-      *        BSP/driver-specific function that
-      *        performs initialization for the 
-      *        API.
+      * @brief A driver-specific function that performs initialization 
+      *        for the API.
       */
     void (*init)(rtems_gpio *pin);
 };
 
+/** @} */
+
+/**
+  * @name Peripheral API operations.
+  *
+  * @{
+  */
+
 /**
   * @brief Register a handler to get API pointer.
   *
-  * @param[in] get_api pointer to a handler to 
-  *            get an API with specified type.
+  * @param[in] get_api pointer to a handler to get an API with 
+  *            specified type.
   * @param index the index of the GPIO controller.
   */
 void rtems_periph_api_register_api(
@@ -134,6 +163,8 @@ rtems_status_code rtems_periph_api_set_api(
 rtems_status_code rtems_periph_api_remove_api(
     rtems_gpio *pin
 );
+
+/** @} */
 
 #ifdef __cplusplus
 }
