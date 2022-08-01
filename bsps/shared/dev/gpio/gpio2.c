@@ -72,7 +72,6 @@ static uint32_t get_ctrl_index(
 )
 {
     uint32_t i;
-    // TODO: binary search
     for (i = 1; i <= num_ctrl; ++i) {
         if (virtual_pin < pin_map[i]) {
             break;
@@ -89,12 +88,12 @@ rtems_status_code rtems_gpio_register(
     uint32_t pin_count
 ) 
 {
-//    rtems_interrupt_level level;
+    rtems_interrupt_level level;
 
     if (num_ctrl == CONFIGURE_GPIO_MAXIMUM_CONTROLLERS)
         return RTEMS_TOO_MANY;
 
-//    rtems_interrupt_disable(level);
+    rtems_interrupt_disable(level);
     get_gpio_table[num_ctrl] = get_gpio;
     destroy_gpio_table[num_ctrl] = destroy_gpio;
 
@@ -102,7 +101,7 @@ rtems_status_code rtems_gpio_register(
 
     pin_map[num_ctrl+1] = pin_map[num_ctrl] + pin_count;
     ++num_ctrl;
-//    rtems_interrupt_enable(level);
+    rtems_interrupt_enable(level);
 
     return RTEMS_SUCCESSFUL;
 }
