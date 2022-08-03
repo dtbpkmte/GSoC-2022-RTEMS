@@ -12,6 +12,134 @@ install:
   source:
   - bsps/arm/stm32f4/include/bsp.h
   - bsps/arm/stm32f4/include/tm27.h
+  - bsps/arm/stm32f4/include/stm32f401xc.h
+  - bsps/arm/stm32f4/include/stm32f401xe.h
+  - bsps/arm/stm32f4/include/stm32f405xx.h
+  - bsps/arm/stm32f4/include/stm32f407xx.h
+  - bsps/arm/stm32f4/include/stm32f410cx.h
+  - bsps/arm/stm32f4/include/stm32f410rx.h
+  - bsps/arm/stm32f4/include/stm32f410tx.h
+  - bsps/arm/stm32f4/include/stm32f411xe.h
+  - bsps/arm/stm32f4/include/stm32f412cx.h
+  - bsps/arm/stm32f4/include/stm32f412rx.h
+  - bsps/arm/stm32f4/include/stm32f412vx.h
+  - bsps/arm/stm32f4/include/stm32f412zx.h
+  - bsps/arm/stm32f4/include/stm32f413xx.h
+  - bsps/arm/stm32f4/include/stm32f415xx.h
+  - bsps/arm/stm32f4/include/stm32f417xx.h
+  - bsps/arm/stm32f4/include/stm32f423xx.h
+  - bsps/arm/stm32f4/include/stm32f427xx.h
+  - bsps/arm/stm32f4/include/stm32f429xx.h
+  - bsps/arm/stm32f4/include/stm32f437xx.h
+  - bsps/arm/stm32f4/include/stm32f439xx.h
+  - bsps/arm/stm32f4/include/stm32f446xx.h
+  - bsps/arm/stm32f4/include/stm32f469xx.h
+  - bsps/arm/stm32f4/include/stm32f479xx.h
+  - bsps/arm/stm32f4/include/stm32f4xx.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_adc_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_adc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_can.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_cec.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_conf.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_cortex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_crc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_cryp_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_cryp.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dac_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dac.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dcmi_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dcmi.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_def.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dfsdm.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dma2d.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dma_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dma.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_dsi.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_eth.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_exti.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_flash_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_flash.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_flash_ramfunc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_fmpi2c_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_fmpi2c.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_fmpsmbus_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_fmpsmbus.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_gpio_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_gpio.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_hash_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_hash.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_hcd.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_i2c_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_i2c.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_i2s_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_i2s.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_irda.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_iwdg.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_lptim.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_ltdc_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_ltdc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_mmc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_nand.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_nor.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_pccard.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_pcd_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_pcd.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_pwr_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_pwr.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_qspi.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_rcc_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_rcc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_rng.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_rtc_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_rtc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_sai_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_sai.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_sd.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_sdram.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_smartcard.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_smbus.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_spdifrx.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_spi.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_sram.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_tim_ex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_tim.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_uart.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_usart.h
+  - bsps/arm/stm32f4/include/stm32f4xx_hal_wwdg.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_adc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_bus.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_cortex.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_crc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_dac.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_dma2d.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_dma.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_exti.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_fmc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_fmpi2c.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_fsmc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_gpio.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_i2c.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_iwdg.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_lptim.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_pwr.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_rcc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_rng.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_rtc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_sdmmc.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_spi.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_system.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_tim.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_usart.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_usb.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_utils.h
+  - bsps/arm/stm32f4/include/stm32f4xx_ll_wwdg.h
+  - bsps/arm/stm32f4/include/system_stm32f4xx.h
+- destination: ${BSP_INCLUDEDIR}/Legacy
+  source:
+  - bsps/arm/stm32f4/include/Legacy/stm32_hal_legacy.h
+  - bsps/arm/stm32f4/include/Legacy/stm32f4xx_hal_eth_legacy.h
+  - bsps/arm/stm32f4/include/Legacy/stm32f4xx_hal_can_legacy.h
 - destination: ${BSP_INCLUDEDIR}/bsp
   source:
   - bsps/arm/stm32f4/include/bsp/i2c.h
@@ -24,7 +152,6 @@ install:
   - bsps/arm/stm32f4/include/bsp/stm32f10xxx_gpio.h
   - bsps/arm/stm32f4/include/bsp/stm32f10xxx_rcc.h
   - bsps/arm/stm32f4/include/bsp/stm32f4.h
-  - bsps/arm/stm32f4/include/bsp/stm32f4xxxx_adc.h
   - bsps/arm/stm32f4/include/bsp/stm32f4xxxx_exti.h
   - bsps/arm/stm32f4/include/bsp/stm32f4xxxx_flash.h
   - bsps/arm/stm32f4/include/bsp/stm32f4xxxx_gpio.h
@@ -41,6 +168,97 @@ install:
 links: []
 source:
 - bsps/arm/shared/clock/clock-armv7m.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_adc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_adc_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_can.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_cec.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_cortex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_crc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_cryp.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_cryp_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dac.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dac_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dcmi.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dcmi_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dfsdm.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dma2d.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dma.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dma_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_dsi.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_eth.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_exti.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_flash.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_flash_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_flash_ramfunc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_fmpi2c.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_fmpi2c_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_fmpsmbus.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_fmpsmbus_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_gpio.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_hash.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_hash_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_hcd.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_i2c.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_i2c_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_i2s.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_i2s_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_irda.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_iwdg.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_lptim.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_ltdc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_ltdc_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_mmc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_nand.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_nor.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_pccard.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_pcd.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_pcd_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_pwr.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_pwr_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_qspi.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_rcc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_rcc_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_rng.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_rtc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_rtc_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_sai.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_sai_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_sd.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_sdram.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_smartcard.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_smbus.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_spdifrx.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_spi.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_sram.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_tim.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_tim_ex.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_uart.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_usart.c
+- bsps/arm/stm32f4/hal/stm32f4xx_hal_wwdg.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_adc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_crc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_dac.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_dma2d.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_dma.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_exti.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_fmc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_fmpi2c.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_fsmc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_gpio.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_i2c.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_lptim.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_pwr.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_rcc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_rng.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_rtc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_sdmmc.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_spi.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_tim.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_usart.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_usb.c
+- bsps/arm/stm32f4/hal/stm32f4xx_ll_utils.c
+- bsps/arm/stm32f4/hal/system_stm32f4xx.c
 - bsps/arm/shared/irq/irq-armv7m.c
 - bsps/arm/shared/irq/irq-dispatch-armv7m.c
 - bsps/arm/shared/start/bsp-start-memcpy.S
