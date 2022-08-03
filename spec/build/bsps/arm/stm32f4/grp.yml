@@ -19,6 +19,14 @@ links:
 - role: build-dependency
   uid: obj
 - role: build-dependency
+  uid: optenhal
+- role: build-dependency
+  uid: optvariant
+- role: build-dependency
+  uid: opthse
+- role: build-dependency
+  uid: optusehse
+- role: build-dependency
   uid: opteni2c1
 - role: build-dependency
   uid: opteni2c2
@@ -51,9 +59,9 @@ links:
 - role: build-dependency
   uid: optusartbaud
 - role: build-dependency
-  uid: ../../linkcmds
-- role: build-dependency
   uid: ../../obj
+- role: build-dependency
+  uid: ../../linkcmds
 - role: build-dependency
   uid: ../../objirq
 - role: build-dependency

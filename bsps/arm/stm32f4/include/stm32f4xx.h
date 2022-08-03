@@ -37,6 +37,10 @@
 #ifndef __STM32F4xx_H
 #define __STM32F4xx_H
 
+#ifdef __rtems__
+#include <bspopts.h>
+#endif /* __rtems__ */
+
 #ifdef __cplusplus
  extern "C" {
 #endif /* __cplusplus */
