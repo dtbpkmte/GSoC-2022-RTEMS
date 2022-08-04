@@ -17,8 +17,6 @@ links:
 - role: build-dependency
   uid: abi
 - role: build-dependency
-  uid: obj
-- role: build-dependency
   uid: optenhal
 - role: build-dependency
   uid: optvariant
@@ -26,6 +24,8 @@ links:
   uid: opthse
 - role: build-dependency
   uid: optusehse
+- role: build-dependency
+  uid: optnumgpioctrl
 - role: build-dependency
   uid: opteni2c1
 - role: build-dependency
@@ -66,6 +66,8 @@ links:
   uid: ../../objirq
 - role: build-dependency
   uid: ../../objmem
+- role: build-dependency
+  uid: obj
 - role: build-dependency
   uid: ../../bspopts
 type: build
