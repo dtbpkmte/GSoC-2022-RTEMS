@@ -27,6 +27,8 @@ links:
 - role: build-dependency
   uid: optnumgpioctrl
 - role: build-dependency
+  uid: optnumadcctrl
+- role: build-dependency
   uid: opteni2c1
 - role: build-dependency
   uid: opteni2c2
