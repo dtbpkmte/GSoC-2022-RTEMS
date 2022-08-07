@@ -10,6 +10,8 @@ links:
 - role: build-dependency
   uid: optmaxnumgpio
 - role: build-dependency
+  uid: optmaxnumadc
+- role: build-dependency
   uid: optbspoptflags
 - role: build-dependency
   uid: optcpukitoptflags

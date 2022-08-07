@@ -17,6 +17,7 @@ install:
   - bsps/include/bsp/fatal.h
   - bsps/include/bsp/fdt.h
   - bsps/include/bsp/gpio2.h
+  - bsps/include/bsp/adc.h
   - bsps/include/bsp/irq-default.h
   - bsps/include/bsp/irq-generic.h
   - bsps/include/bsp/irq-info.h
